@@ -7,29 +7,14 @@
 #include <sstream>
 #include <string>
 
-
-std::string readShaderFile(const std::string& filePath) {
-    std::ifstream fileStream(filePath); // Créer un flux d'entrée à partir du fichier
-    if (!fileStream.is_open()) {
-        std::cerr << "Impossible d'ouvrir le fichier: " << filePath << std::endl;
-        return "";
-    }
-
-    std::stringstream shaderStream; // Utiliser un flux de string pour stocker le contenu
-    shaderStream << fileStream.rdbuf(); // Lire tout le fichier dans le flux de string
-    fileStream.close(); // Fermer explicitement le fichier
-
-    return shaderStream.str(); // Retourner le contenu du fichier comme une chaîne de caractères
-}
+#include "shader.hpp"
 
 int main(int argc, char* argv[]) {
-    // Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cerr << "Failed to initialize SDL: " << SDL_GetError() << std::endl;
         return -1;
     }
 
-    // Create an SDL window with an OpenGL context
     SDL_Window* window = SDL_CreateWindow(
         "OpenGL Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600,
         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
@@ -39,32 +24,29 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    // Create an OpenGL context
     SDL_GLContext context = SDL_GL_CreateContext(window);
     if (!context) {
         std::cerr << "Failed to create OpenGL context: " << SDL_GetError() << std::endl;
         return -1;
     }
 
-    // Initialize glad
     if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
         std::cerr << "Failed to initialize OpenGL context" << std::endl;
         return -1;
     }
 
-    // Set the viewport
     glViewport(0, 0, 800, 600);
 
     float vertices[] = {
-        0.5f,  0.5f, 0.0f,  // top right
-        0.5f, -0.5f, 0.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f,  // bottom left
-        -0.5f,  0.5f, 0.0f   // top left 
+        0.5f,  0.5f, 0.0f,
+        0.5f, -0.5f, 0.0f,
+        -0.5f, -0.5f, 0.0f,
+        -0.5f,  0.5f, 0.0f
     };
 
-    unsigned int indices[] = {  // note that we start from 0!
-        0, 1, 3,   // first triangle
-        1, 2, 3    // second triangle
+    unsigned int indices[] = {
+        0, 1, 3,
+        1, 2, 3
     };  
 
     unsigned int VBO;
@@ -86,49 +68,16 @@ int main(int argc, char* argv[]) {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    unsigned int vertexShader;
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    std::string vertexShaderSource = readShaderFile("shaders/vertex.glsl");
-    const char* vertexShaderSourceCStr = vertexShaderSource.c_str(); 
-    glShaderSource(vertexShader, 1, &vertexShaderSourceCStr, NULL);
-    glCompileShader(vertexShader);
+    ShaderEngine shaderEngine;
+    ShaderFactory shaderFactory;
 
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cerr << "Failed to compile vertex shader: " << infoLog << std::endl;
-    }
+    Shader vertexShader = shaderFactory.createShader("shaders/vertex.glsl", GL_VERTEX_SHADER);
+    shaderEngine.addShader(vertexShader);
 
-    unsigned int fragmentShader;
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    std::string fragmentShaderSource = readShaderFile("shaders/fragment.glsl");
-    const char* fragmentShaderSourceCStr = fragmentShaderSource.c_str(); 
-    glShaderSource(fragmentShader, 1, &fragmentShaderSourceCStr, NULL);
-    glCompileShader(fragmentShader);
+    Shader fragmentShader = shaderFactory.createShader("shaders/fragment.glsl", GL_FRAGMENT_SHADER);
+    shaderEngine.addShader(fragmentShader);
 
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cerr << "Failed to compile fragment shader: " << infoLog << std::endl;
-    }
-
-    unsigned int shaderProgram;
-    shaderProgram = glCreateProgram();
-
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cerr << "Failed to link shader program: " << infoLog << std::endl;
-    }
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    shaderEngine.compile();
 
     // Main loop
     bool running = true;
@@ -145,7 +94,7 @@ int main(int argc, char* argv[]) {
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(shaderProgram);
+        glUseProgram(shaderEngine.getShaderProgramID());
         glBindVertexArray(VAO);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
