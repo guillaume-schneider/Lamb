@@ -27,5 +27,14 @@ target_link_libraries(GameEngine PRIVATE glad::glad)
 find_package(OpenGL REQUIRED)
 target_link_libraries(GameEngine PRIVATE OpenGL::GL)
 
+find_package(assimp CONFIG REQUIRED)
+target_link_libraries(GameEngine PRIVATE assimp::assimp)
+
+find_package(Stb REQUIRED)
+target_include_directories(${PROJECT_NAME} PRIVATE ${Stb_INCLUDE_DIR})
+
+find_package(glm CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
+
 # Optionally add other settings, such as compiler flags, etc.
 # target_compile_options(GameEngine PRIVATE -Wall -Wextra)

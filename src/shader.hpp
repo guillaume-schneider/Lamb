@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <glad/glad.h>
 
 struct Shader {
     std::string source;
@@ -22,7 +23,10 @@ class ShaderEngine {
         void addShader(Shader& shader);
         void compile();
 
-        unsigned int getShaderProgramID() { return m_shaderProgramID; }
+        unsigned int getShaderProgramID() { return m_shaderProgramID; };
+        void setInt(const std::string& name, int value) { 
+            glUniform1i(glGetUniformLocation(m_shaderProgramID, name.c_str()), value); 
+        };
 };
 
 #endif

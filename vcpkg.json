@@ -2,6 +2,8 @@
   "dependencies": [
     "glad",
     "sdl2",
-    "opengl"
+    "opengl",
+    "assimp",
+    "glm"
   ]
 }
