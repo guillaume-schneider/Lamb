@@ -63,3 +63,7 @@ void ShaderEngine::compile() {
 
     m_shaders.clear();
 }
+
+void ShaderEngine::use() {
+    glUseProgram(m_shaderProgramID);
+}

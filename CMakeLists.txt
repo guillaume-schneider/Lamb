@@ -10,13 +10,13 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-set(SOURCES
-    src/main.cpp
-    src/shader.cpp
-    src/camera.cpp)
+file(GLOB SOURCES
+    "src/*.cpp"
+)
 
-# Add executable
 add_executable(GameEngine ${SOURCES})
+
+target_include_directories(GameEngine PRIVATE includes)
 
 # Find and link libraries
 find_package(SDL2 CONFIG REQUIRED)

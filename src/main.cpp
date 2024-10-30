@@ -199,7 +199,7 @@ int main(int argc, char* argv[]) {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
 
-        glUseProgram(shaderEngine.getShaderProgramID());
+        shaderEngine.use();
 
         glm::mat4 model = glm::mat4(1.0f);
         // model = glm::rotate(model, (float)SDL_GetTicks64()/128 * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));

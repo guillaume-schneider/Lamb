@@ -24,6 +24,7 @@ class ShaderEngine {
         void compile();
 
         unsigned int getShaderProgramID() { return m_shaderProgramID; };
+        void use();
         void setInt(const std::string& name, int value) { 
             glUniform1i(glGetUniformLocation(m_shaderProgramID, name.c_str()), value); 
         };
