@@ -1,6 +1,5 @@
 #include <SDL2/SDL.h>
 #include <glad/glad.h>
-#include <iostream>
 
 #include <iostream>
 #include <fstream>
@@ -9,6 +8,8 @@
 #include <stb_image.h>
 
 #include "shader.hpp"
+#include "camera.hpp"
+#include "time.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -17,58 +18,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-float cameraSpeed = 50.0f;
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
-
-glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
-
-float lastX = 400, lastY = 300;
-float yaw = -90.0f, pitch = 0.0f;
-
-bool firstMouse = true;
-
-void handleMouseMovement(int xrel, int yrel) {
-
-    const float sensitivity = 0.1f;
-
-    yaw += xrel * sensitivity;
-    pitch -= yrel * sensitivity;
-
-    glm::vec3 direction;
-    direction.x = cos(glm::radians(yaw));
-    direction.y = sin(glm::radians(pitch));
-    direction.z = sin(glm::radians(yaw));
-    cameraFront = glm::normalize(direction);
-}
-
-enum Button {
-    NO_INPUT = -1,
-    UP,
-    DOWN,
-    LEFT,
-    RIGHT
-};
-
 bool running = true;
-
-void handleContinuousMovement() {
-    const Uint8* keystate = SDL_GetKeyboardState(NULL);
-    if (keystate[SDL_SCANCODE_W]) {
-        cameraPos += cameraSpeed * deltaTime * cameraFront;
-    }
-    if (keystate[SDL_SCANCODE_S]) {
-        cameraPos -= cameraSpeed * deltaTime * cameraFront;
-    }
-    if (keystate[SDL_SCANCODE_A]) {
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed * deltaTime;
-    }
-    if (keystate[SDL_SCANCODE_D]) {
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed * deltaTime;
-    }
-}
 
 void handleEvents(SDL_Event& event) {
     while (SDL_PollEvent(&event)) {
@@ -228,24 +178,21 @@ int main(int argc, char* argv[]) {
 
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
+    Camera camera;
     // Main loop
     while (running) {
-
-        float currentFrame = SDL_GetTicks() / 1000.0f; // Convert ms to seconds
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
+        Time::getInstance().computeDeltaTime();
 
         SDL_Event event;
         handleEvents(event);
-        handleContinuousMovement();
+        camera.computeCameraMovements();
+
         int xrel, yrel;
         SDL_GetRelativeMouseState(&xrel, &yrel);
-        if (xrel != 0 || yrel != 0) {  // Only process if there's actual movement
-            std::cout << "Relative x: " << xrel << ", Relative y: " << yrel << std::endl;
-            handleMouseMovement(xrel, yrel);
+        if (xrel != 0 || yrel != 0) {
+            camera.computeCursorCameraMovements(xrel, yrel);
         }
 
-        // Rendering
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -258,7 +205,7 @@ int main(int argc, char* argv[]) {
         // model = glm::rotate(model, (float)SDL_GetTicks64()/128 * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
 
         glm::mat4 view;
-        view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        view = camera.getViewMatrix();
 
         glm::mat4 projection;
         projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);

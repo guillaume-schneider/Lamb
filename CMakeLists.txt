@@ -12,7 +12,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 set(SOURCES
     src/main.cpp
-    src/shader.cpp)
+    src/shader.cpp
+    src/camera.cpp)
 
 # Add executable
 add_executable(GameEngine ${SOURCES})
