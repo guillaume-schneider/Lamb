@@ -5,11 +5,11 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <stb_image.h>
 
 #include "shader.hpp"
 #include "camera.hpp"
 #include "time.hpp"
+#include "model.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -26,8 +26,7 @@ void handleEvents(SDL_Event& event) {
             running = false;
         }
     }
-}
-
+};
 
 int main(int argc, char* argv[]) {
 
@@ -178,6 +177,8 @@ int main(int argc, char* argv[]) {
 
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
+    Model model("C:\\Users\\NULL\\Documents\\Games\\GameEngine\\res\\FinalBaseMesh.obj");
+
     Camera camera;
     // Main loop
     while (running) {
@@ -201,8 +202,8 @@ int main(int argc, char* argv[]) {
 
         shaderEngine.use();
 
-        glm::mat4 model = glm::mat4(1.0f);
-        // model = glm::rotate(model, (float)SDL_GetTicks64()/128 * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+        glm::mat4 modelMatrix = glm::mat4(1.0f);
+        // modelMatrix = glm::rotate(modelMatrix, (float)SDL_GetTicks64()/128 * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
 
         glm::mat4 view;
         view = camera.getViewMatrix();
@@ -211,7 +212,7 @@ int main(int argc, char* argv[]) {
         projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
 
         int modelLoc = glGetUniformLocation(shaderEngine.getShaderProgramID(), "model");
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(modelMatrix));
 
         int viewLoc = glGetUniformLocation(shaderEngine.getShaderProgramID(), "view");
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
@@ -221,6 +222,8 @@ int main(int argc, char* argv[]) {
 
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        model.draw(shaderEngine);
 
         // Swap the window buffers
         SDL_GL_SwapWindow(window);
