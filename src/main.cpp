@@ -6,6 +6,10 @@
 #include <sstream>
 #include <string>
 
+#include <imgui.h>
+#include <imgui_impl_sdl2.h>
+#include <imgui_impl_opengl3.h>
+
 #include "shader.hpp"
 #include "camera.hpp"
 #include "time.hpp"
@@ -17,12 +21,30 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+constexpr unsigned int WINDOW_SIZE_X = 1980;
+constexpr unsigned int WINDOW_SIZE_Y = 1080;
+constexpr float WINDOW_RATIO = static_cast<float>(WINDOW_SIZE_X) / WINDOW_SIZE_Y;
+
 bool running = true;
+bool enableMouseCapture = true;
+
+void toggleMouseCapture() {
+    if (enableMouseCapture) {
+        SDL_SetRelativeMouseMode(SDL_TRUE);  // Capture the mouse
+    } else {
+        SDL_SetRelativeMouseMode(SDL_FALSE); // Release the mouse
+    }
+}
 
 void handleEvents(SDL_Event& event) {
     while (SDL_PollEvent(&event)) {
+        ImGui_ImplSDL2_ProcessEvent(&event);
         if (event.type == SDL_QUIT) {
             running = false;
+        }
+        if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) {
+            enableMouseCapture = !enableMouseCapture;
+            toggleMouseCapture();
         }
     }
 };
@@ -42,15 +64,18 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
+#ifdef DEBUG
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+#endif
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
 
     SDL_Window* window = SDL_CreateWindow(
-        "OpenGL Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600,
-        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
+        "OpenGL Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+            WINDOW_SIZE_X, WINDOW_SIZE_Y,
+                SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
     );
     if (!window) {
         std::cerr << "Failed to create window: " << SDL_GetError() << std::endl;
@@ -60,14 +85,32 @@ int main(int argc, char* argv[]) {
     SDL_GLContext context = SDL_GL_CreateContext(window);
     if (!context) {
         std::cerr << "Failed to create OpenGL context: " << SDL_GetError() << std::endl;
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return -1;
+    }
+    
+    if (SDL_GL_MakeCurrent(window, context) != 0) {
+        std::cerr << "SDL_GL_MakeCurrent::ERROR::" << SDL_GetError() << std::endl;
+        SDL_GL_DeleteContext(context);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
         return -1;
     }
 
     if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
         std::cerr << "Failed to initialize OpenGL context" << std::endl;
+        SDL_GL_DeleteContext(context);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
         return -1;
     }
 
+#ifdef VSYNC
+    SDL_GL_SetSwapInterval(1);
+#endif
+
+#ifdef DEBUG
     if (gladLoadGL()) {  // Ensure GLAD loaded OpenGL
         GLint flags;
         glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
@@ -81,6 +124,7 @@ int main(int argc, char* argv[]) {
     } else {
         std::cerr << "Failed to initialize GLAD!" << std::endl;
     }
+#endif
 
     const GLubyte* version = glGetString(GL_VERSION);
     if (version) {
@@ -89,8 +133,22 @@ int main(int argc, char* argv[]) {
         std::cerr << "Unable to retrieve OpenGL version." << std::endl;
     }
 
+    glViewport(0, 0, WINDOW_SIZE_X, WINDOW_SIZE_Y);
 
-    glViewport(0, 0, 800, 600);
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsLight();
+
+    ImGui_ImplSDL2_InitForOpenGL(window, context);
+    ImGui_ImplOpenGL3_Init();
+
 
     ShaderEngine shaderEngineLighting;
     ShaderEngine shaderEngineLight;
@@ -182,12 +240,19 @@ int main(int argc, char* argv[]) {
 
         SDL_Event event;
         handleEvents(event);
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplSDL2_NewFrame();
+        ImGui::NewFrame();
+        ImGui::ShowDemoWindow();
+
         camera.computeCameraMovements();
 
-        int xrel, yrel;
-        SDL_GetRelativeMouseState(&xrel, &yrel);
-        if (xrel != 0 || yrel != 0) {
-            camera.computeCursorCameraMovements(xrel, yrel);
+        if (enableMouseCapture) {
+            int xrel, yrel;
+            SDL_GetRelativeMouseState(&xrel, &yrel);
+            if (xrel != 0 || yrel != 0) {
+                camera.computeCursorCameraMovements(xrel, yrel);
+            }
         }
 
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -200,14 +265,29 @@ int main(int argc, char* argv[]) {
         view = camera.getViewMatrix();
 
         glm::mat4 projection;
-        projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(45.0f),
+            WINDOW_RATIO, 0.1f, 100.0f);
 
-        // glActiveTexture(GL_TEXTURE0);
-        // glBindTexture(GL_TEXTURE_2D, texture);
+        shaderEngineLight.use();
+        shaderEngineLight.setMat4("projection", projection);
+        shaderEngineLight.setMat4("view", view);
+        modelMatrix = glm::translate(modelMatrix, lightPos);
+        glm::vec3 lightPosition = glm::vec3(modelMatrix[3]);
+
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
+        shaderEngineLight.setMat4("model", modelMatrix);
+
+        glBindVertexArray(lightVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(0);
+
+        modelMatrix = glm::mat4(1.0f);
 
         shaderEngineLighting.use();
         shaderEngineLighting.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
-        shaderEngineLighting.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+        shaderEngineLighting.setVec3("lightColor", 0.3f, 1.0f, 1.0f);
+        shaderEngineLighting.setVec3("lightPosition", lightPosition.x,
+            lightPosition.y, lightPosition.z);
 
         shaderEngineLighting.setMat4("model", modelMatrix);
         shaderEngineLighting.setMat4("view", view);
@@ -215,21 +295,15 @@ int main(int argc, char* argv[]) {
         model.draw(shaderEngineLighting);
         glBindVertexArray(0);
 
-        shaderEngineLight.use();
-        shaderEngineLight.setMat4("projection", projection);
-        shaderEngineLight.setMat4("view", view);
-        modelMatrix = glm::translate(modelMatrix, lightPos);
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f)); // a smaller cube
-        shaderEngineLight.setMat4("model", modelMatrix);
-
-        glBindVertexArray(lightVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
-
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(window);
     }
 
-    // Cleanup
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImGui::DestroyContext();
+
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);
     SDL_Quit();

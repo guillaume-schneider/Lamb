@@ -4,6 +4,7 @@
     "sdl2",
     "opengl",
     "assimp",
-    "glm"
+    "glm",
+    "imgui"
   ]
 }
