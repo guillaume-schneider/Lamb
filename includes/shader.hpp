@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 #include <glad/glad.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 struct Shader {
     std::string source;
@@ -28,6 +30,14 @@ class ShaderEngine {
         void setInt(const std::string& name, int value) { 
             glUniform1i(glGetUniformLocation(m_shaderProgramID, name.c_str()), value); 
         };
+        void setVec3(const std::string& name, float x, float y, float z) {
+            glUniform3f(glGetUniformLocation(m_shaderProgramID, name.c_str()),
+                        x, y, z);
+        };
+        void setMat4(const std::string& name, glm::mat4 mat) {
+            glUniformMatrix4fv(glGetUniformLocation(m_shaderProgramID, name.c_str()),
+                        1, GL_FALSE, glm::value_ptr(mat));
+        }
 };
 
 #endif

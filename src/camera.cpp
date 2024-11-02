@@ -35,4 +35,10 @@ void Camera::computeCameraMovements() {
         m_position += glm::normalize(glm::cross(m_direction, m_up)) 
                         * m_cameraSpeed * deltaTime;
     }
+    if (keystate[SDL_SCANCODE_SPACE]) {
+        m_position += m_cameraSpeed * deltaTime * m_up;
+    }
+    if (keystate[SDL_SCANCODE_LCTRL]) {
+        m_position -= m_cameraSpeed * deltaTime * m_up;
+    }
 }
