@@ -92,15 +92,15 @@ std::vector<int> computeIndicesSpheres(int stackCount, int sectorCount) {
         for (int j = 0; j < sectorCount; j++) {
 
             if (i != 0) {
-                indices.push_back(k1);
-                indices.push_back(k2);
-                indices.push_back(k1 + 1);
+                indices.push_back(k1 + j);
+                indices.push_back(k2 + j);
+                indices.push_back(k1 + j + 1);
             }
 
             if (i != (stackCount - 1)) {
-                indices.push_back(k1 + 1);
-                indices.push_back(k2);
-                indices.push_back(k2 + 1);
+                indices.push_back(k1 + j + 1);
+                indices.push_back(k2 + j);
+                indices.push_back(k2 + j + 1);
             }
         }
     }
