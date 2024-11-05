@@ -308,7 +308,7 @@ int main(int argc, char* argv[]) {
 
     Camera camera;
 
-    std::vector<float> sphereVertices = computeVertexSphere(16, 36, 5);
+    std::vector<float> sphereVertices = computeVertexSphere(16, 32, 5);
     std::vector<int> sphereIndices = computeIndicesSpheres(16, 32);
 
     unsigned int VBOSphere, EBOSphere, VAOSphere;
@@ -324,7 +324,7 @@ int main(int argc, char* argv[]) {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphereIndices.size() * sizeof(int), &sphereIndices[0], GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
     glBindVertexArray(0);
 
