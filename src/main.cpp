@@ -62,16 +62,15 @@ std::vector<float> computeVertexSphere(int sectorCount, int stackCount, int radi
     float x, y, z;
 
     std::vector<float> vertices;
-    for (int i = 0; i < stackCount; i ++){
+    for (int i = 0; i <= stackCount; i ++){
+        stackAngle = M_PI / 2 - (M_PI * float(i) / float(stackCount));
 
-        stackAngle = (M_PI / 2) - (M_PI * float(i) / float(stackCount - 1));
+        for (int j = 0; j <= sectorCount; j ++) {
+            sectorAngle = 2 * M_PI * (float(j) / float(sectorCount));
 
-        for (int j = 0; j < sectorCount; j ++) {
-            sectorAngle = 2 * M_PI * float(j) / float(sectorCount);
-
-            x = radius * cos(sectorAngle) * cos(stackAngle);
-            y = radius * sin(sectorAngle) * cos(stackAngle);
-            z = radius * sin(stackAngle);
+            x = radius * cosf(stackAngle) * cosf(sectorAngle);
+            y = radius * sinf(stackAngle);
+            z = radius * cosf(stackAngle) * sinf(sectorAngle);
 
             // Vertex vertex;
             vertices.push_back(x);
@@ -83,9 +82,9 @@ std::vector<float> computeVertexSphere(int sectorCount, int stackCount, int radi
     return vertices;
 }
 
-std::vector<int> computeIndicesSpheres(int stackCount, int sectorCount) {
-    std::vector<int> indices;
-    int k1, k2;
+std::vector<unsigned int> computeIndicesSpheres(int stackCount, int sectorCount) {
+    std::vector<unsigned int> indices;
+    unsigned int k1, k2;
     for (int i = 0; i < stackCount; i++) {
         k1 = i * (sectorCount + 1);
         k2 = k1 + sectorCount + 1;
@@ -215,23 +214,22 @@ int main(int argc, char* argv[]) {
     ImGui_ImplSDL2_InitForOpenGL(window, context);
     ImGui_ImplOpenGL3_Init();
 
-
     ShaderEngine shaderEngineLighting;
     ShaderEngine shaderEngineLight;
 
     ShaderFactory shaderFactory;
 
-    Shader lightingVertexShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\lighting_vertex.glsl", GL_VERTEX_SHADER);
-    shaderEngineLighting.addShader(lightingVertexShader);
-    Shader lightingFragmentShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\lighting_fragment.glsl", GL_FRAGMENT_SHADER);
-    shaderEngineLighting.addShader(lightingFragmentShader);
-    shaderEngineLighting.compile();
+    // Shader lightingVertexShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\lighting_vertex.glsl", GL_VERTEX_SHADER);
+    // shaderEngineLighting.addShader(lightingVertexShader);
+    // Shader lightingFragmentShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\lighting_fragment.glsl", GL_FRAGMENT_SHADER);
+    // shaderEngineLighting.addShader(lightingFragmentShader);
+    // shaderEngineLighting.compile();
 
-    Shader lightVertexShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\light_vertex.glsl", GL_VERTEX_SHADER);
-    shaderEngineLight.addShader(lightVertexShader);
-    Shader lightFragmentShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\light_fragment.glsl", GL_FRAGMENT_SHADER);
-    shaderEngineLight.addShader(lightFragmentShader);
-    shaderEngineLight.compile();
+    // Shader lightVertexShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\light_vertex.glsl", GL_VERTEX_SHADER);
+    // shaderEngineLight.addShader(lightVertexShader);
+    // Shader lightFragmentShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\light_fragment.glsl", GL_FRAGMENT_SHADER);
+    // shaderEngineLight.addShader(lightFragmentShader);
+    // shaderEngineLight.compile();
 
     ShaderEngine shaderEngineBasic;
     Shader basicVertexShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\basic_vertex.glsl", GL_VERTEX_SHADER);
@@ -307,29 +305,31 @@ int main(int argc, char* argv[]) {
     Model model("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\res\\teapot.fbx");
 
     Camera camera;
-
-    std::vector<float> sphereVertices = computeVertexSphere(32, 18, 1);
-    std::vector<int> sphereIndices = computeIndicesSpheres(32, 18);
-
-    unsigned int VBOSphere, EBOSphere, VAOSphere;
-    glGenVertexArrays(1, &VAOSphere);
-    glGenBuffers(1, &VBOSphere);
-    glGenBuffers(1, &EBOSphere);
-
-    glBindVertexArray(VAOSphere);
-    glBindBuffer(GL_ARRAY_BUFFER, VBOSphere);
-    glBufferData(GL_ARRAY_BUFFER, sphereVertices.size() * sizeof(float), &sphereVertices[0], GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOSphere);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphereIndices.size() * sizeof(int), &sphereIndices[0], GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); // Corrigé à 0
-
-    glBindVertexArray(0);
-
     // Main loop
     while (running) {
+
+        std::vector<float> sphereVertices = computeVertexSphere(18, 32, 1);
+        std::vector<unsigned int> sphereIndices = computeIndicesSpheres(18, 32);
+
+        unsigned int VBOSphere, EBOSphere, VAOSphere;
+        glGenVertexArrays(1, &VAOSphere);
+        glGenBuffers(1, &VBOSphere);
+        glGenBuffers(1, &EBOSphere);
+
+        glBindVertexArray(VAOSphere);
+        glBindBuffer(GL_ARRAY_BUFFER, VBOSphere);
+        glBufferData(GL_ARRAY_BUFFER, sphereVertices.size() * sizeof(float), sphereVertices.data(), GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOSphere);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphereIndices.size() * sizeof(unsigned int), sphereIndices.data(), GL_STATIC_DRAW);
+
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); // Corrigé à 0
+
+        glBindVertexArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
         Time::getInstance().computeDeltaTime();
 
         SDL_Event event;
@@ -430,7 +430,7 @@ int main(int argc, char* argv[]) {
         shaderEngineBasic.setMat4("projection", projection);
 
         glBindVertexArray(VAOSphere);
-        glDrawElements(GL_TRIANGLES, sphereIndices.size(), GL_UNSIGNED_INT, (void*)0);
+        glDrawElements(GL_LINES, sphereIndices.size(), GL_UNSIGNED_INT, (void*)0);
         glBindVertexArray(0);
 
         ImGui::Render();
