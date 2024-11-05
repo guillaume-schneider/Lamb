@@ -64,7 +64,7 @@ std::vector<float> computeVertexSphere(int sectorCount, int stackCount, int radi
     std::vector<float> vertices;
     for (int i = 0; i < stackCount; i ++){
 
-        stackAngle = M_PI * float(i) / float(stackCount); // angle entre 0 et M_PI
+        stackAngle = (M_PI / 2) - (M_PI * float(i) / float(stackCount - 1));
 
         for (int j = 0; j < sectorCount; j ++) {
             sectorAngle = 2 * M_PI * float(j) / float(sectorCount);
@@ -308,8 +308,8 @@ int main(int argc, char* argv[]) {
 
     Camera camera;
 
-    std::vector<float> sphereVertices = computeVertexSphere(16, 32, 5);
-    std::vector<int> sphereIndices = computeIndicesSpheres(16, 32);
+    std::vector<float> sphereVertices = computeVertexSphere(32, 18, 1);
+    std::vector<int> sphereIndices = computeIndicesSpheres(32, 18);
 
     unsigned int VBOSphere, EBOSphere, VAOSphere;
     glGenVertexArrays(1, &VAOSphere);
@@ -324,7 +324,7 @@ int main(int argc, char* argv[]) {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphereIndices.size() * sizeof(int), &sphereIndices[0], GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); // Corrigé à 0
 
     glBindVertexArray(0);
 
@@ -368,7 +368,7 @@ int main(int argc, char* argv[]) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glm::mat4 modelMatrix = glm::mat4(1.0f);
-        modelMatrix = glm::rotate(modelMatrix, (float)SDL_GetTicks()/256, glm::vec3(0.0f, 1.0f, 0.0f));
+        // modelMatrix = glm::rotate(modelMatrix, (float)SDL_GetTicks()/256, glm::vec3(0.0f, 1.0f, 0.0f));
         // modelMatrix = glm::rotate(modelMatrix, (float)SDL_GetTicks64()/128 * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
 
         glm::mat4 view(1.0f);
