@@ -34,9 +34,17 @@ class ShaderEngine {
             glUniform3f(glGetUniformLocation(m_shaderProgramID, name.c_str()),
                         x, y, z);
         };
+        void setVec3(const std::string& name, glm::vec3 value) {
+            ShaderEngine::setVec3(name, value.x, value.y, value.z);
+        }
         void setMat4(const std::string& name, glm::mat4 mat) {
             glUniformMatrix4fv(glGetUniformLocation(m_shaderProgramID, name.c_str()),
-                        1, GL_FALSE, glm::value_ptr(mat));
+                1, GL_FALSE, glm::value_ptr(mat));
+        }
+
+        void setFloat(const std::string& name, float value) {
+            glUniform1f(glGetUniformLocation(m_shaderProgramID, name.c_str()),
+                value);
         }
 };
 

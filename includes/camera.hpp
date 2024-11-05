@@ -22,6 +22,10 @@ public:
         return glm::lookAt(m_position, m_position + m_direction, m_up);
     };
 
+    glm::vec3 getPosition() const {
+        return m_position;
+    }
+
 private:
     glm::vec3 m_position;       // Camera position
     glm::vec3 m_direction;      // Camera direction

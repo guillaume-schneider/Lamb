@@ -5,6 +5,9 @@
     "opengl",
     "assimp",
     "glm",
-    "imgui"
+    {
+      "name": "imgui",
+      "features": ["docking-experimental", "opengl3-binding", "sdl2-binding", "win32-binding"]
+    }
   ]
 }

@@ -1,32 +1,45 @@
 #version 460 core
-in vec3 Normal;
-in vec3 LightDir;
 
 out vec4 FragColor;
 
-uniform vec3 objectColor;
-uniform vec3 lightColor;
-uniform int toonLevels = 4; // Number of quantization levels for shadin
+in vec3 normal;
+in vec3 fragPosition;
 
-uniform sampler2D texture_diffuse1;
+uniform vec3 cameraPosition;
 
-void main()
-{
+// was object color
+struct Material {
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+    float shininess;
+}; 
 
-    // Normalize vectors
-    vec3 norm = normalize(Normal);
-    vec3 lightDir = normalize(LightDir);
+// was light strengh
+struct Light {
+    vec3 position;
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+};
 
-    // Calculate diffuse lighting intensity
-    float intensity = max(dot(norm, lightDir), 0.0);
+uniform Material material;
+uniform Light light;
 
-    // Quantize the lighting by dividing it into discrete bands
-    float quantizedIntensity = floor(intensity * toonLevels) / toonLevels;
+void main() {
+    vec3 norm = normalize(normal);
+    vec3 lightDirection = normalize(light.position - fragPosition);
+    float diff = max(dot(norm, lightDirection), 0.0);
+    vec3 diffuse = light.diffuse * diff * material.diffuse;
 
-    // Apply the quantized intensity to the object color
-    vec3 color = quantizedIntensity * objectColor;
+    vec3 ambient = light.ambient * material.ambient;
 
-    FragColor = vec4(lightColor * color, 1.0);
-    // FragColor = texture(texture_diffuse1, TexCoords);
-    // FragColor = vec4(lightColor * objectColor, 1.0);
+    vec3 cameraDirection = normalize(cameraPosition - fragPosition);
+    vec3 reflectDirection = reflect(-lightDirection, norm);
+
+    float spec = pow(max(dot(cameraDirection, reflectDirection), 0.0), material.shininess);
+    vec3 specular = light.specular * spec * material.specular;
+
+    vec3 result = (ambient + diffuse + specular);
+    FragColor = vec4(result, 1.0);
 }

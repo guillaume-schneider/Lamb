@@ -21,22 +21,30 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-constexpr unsigned int WINDOW_SIZE_X = 1980;
-constexpr unsigned int WINDOW_SIZE_Y = 1080;
-constexpr float WINDOW_RATIO = static_cast<float>(WINDOW_SIZE_X) / WINDOW_SIZE_Y;
+constexpr unsigned int WINDOW_WIDTH = 1980;
+constexpr unsigned int WINDOW_HEIGHT = 1080;
 
+int lastX, lastY;
 bool running = true;
 bool enableMouseCapture = true;
 
-void toggleMouseCapture() {
+std::vector<int> components;
+
+void toggleMouseCapture(SDL_Window* window) {
     if (enableMouseCapture) {
-        SDL_SetRelativeMouseMode(SDL_TRUE);  // Capture the mouse
+        SDL_SetRelativeMouseMode(SDL_TRUE);
     } else {
-        SDL_SetRelativeMouseMode(SDL_FALSE); // Release the mouse
+        SDL_SetRelativeMouseMode(SDL_FALSE);
+        int windowWidth, windowHeight;
+        SDL_GetWindowSize(window, &windowWidth, &windowHeight);
+        int centerX = windowWidth / 2;
+        int centerY = windowHeight / 2;
+
+        SDL_WarpMouseInWindow(window, centerX, centerY);
     }
 }
 
-void handleEvents(SDL_Event& event) {
+void handleEvents(SDL_Event& event, SDL_Window* window) {
     while (SDL_PollEvent(&event)) {
         ImGui_ImplSDL2_ProcessEvent(&event);
         if (event.type == SDL_QUIT) {
@@ -44,10 +52,62 @@ void handleEvents(SDL_Event& event) {
         }
         if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) {
             enableMouseCapture = !enableMouseCapture;
-            toggleMouseCapture();
+            toggleMouseCapture(window);
         }
     }
 };
+
+std::vector<float> computeVertexSphere(int sectorCount, int stackCount, int radius) {
+    float stackAngle, sectorAngle;
+    float x, y, z;
+
+    std::vector<float> vertices;
+    for (int i = 0; i < stackCount; i ++){
+
+        stackAngle = M_PI * float(i) / float(stackCount); // angle entre 0 et M_PI
+
+        for (int j = 0; j < sectorCount; j ++) {
+            sectorAngle = 2 * M_PI * float(j) / float(sectorCount);
+
+            x = radius * cos(sectorAngle) * cos(stackAngle);
+            y = radius * sin(sectorAngle) * cos(stackAngle);
+            z = radius * sin(stackAngle);
+
+            // Vertex vertex;
+            vertices.push_back(x);
+            vertices.push_back(y);
+            vertices.push_back(z);
+        }
+    }
+
+    return vertices;
+}
+
+std::vector<int> computeIndicesSpheres(int stackCount, int sectorCount) {
+    std::vector<int> indices;
+    int k1, k2;
+    for (int i = 0; i < stackCount; i++) {
+        k1 = i * (sectorCount + 1);
+        k2 = k1 + sectorCount + 1;
+        for (int j = 0; j < sectorCount; j++) {
+
+            if (i != 0) {
+                indices.push_back(k1);
+                indices.push_back(k2);
+                indices.push_back(k1 + 1);
+            }
+
+            if (i != (stackCount - 1)) {
+                indices.push_back(k1 + 1);
+                indices.push_back(k2);
+                indices.push_back(k2 + 1);
+            }
+        }
+    }
+    return indices;
+}
+
+
 
 void APIENTRY openglDebugCallback(GLenum source, GLenum type, GLuint id,
                                   GLenum severity, GLsizei length,
@@ -74,7 +134,7 @@ int main(int argc, char* argv[]) {
 
     SDL_Window* window = SDL_CreateWindow(
         "OpenGL Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-            WINDOW_SIZE_X, WINDOW_SIZE_Y,
+            WINDOW_WIDTH, WINDOW_HEIGHT,
                 SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
     );
     if (!window) {
@@ -133,7 +193,11 @@ int main(int argc, char* argv[]) {
         std::cerr << "Unable to retrieve OpenGL version." << std::endl;
     }
 
-    glViewport(0, 0, WINDOW_SIZE_X, WINDOW_SIZE_Y);
+    int currentWindowWidth, currentWindowHeight;
+    SDL_GetWindowSize(window, &currentWindowWidth, &currentWindowHeight);
+    float currrentWindowRatio = static_cast<float>(currentWindowWidth) / currentWindowHeight;
+
+    glViewport(0, 0, currentWindowWidth, currentWindowHeight);
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -141,6 +205,8 @@ int main(int argc, char* argv[]) {
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;      // Enable Docking
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;    // Enable Multi-Viewport
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
@@ -155,17 +221,24 @@ int main(int argc, char* argv[]) {
 
     ShaderFactory shaderFactory;
 
-    Shader lightingVertexShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\GameEngine\\shaders\\lighting_vertex.glsl", GL_VERTEX_SHADER);
+    Shader lightingVertexShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\lighting_vertex.glsl", GL_VERTEX_SHADER);
     shaderEngineLighting.addShader(lightingVertexShader);
-    Shader lightingFragmentShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\GameEngine\\shaders\\lighting_fragment.glsl", GL_FRAGMENT_SHADER);
+    Shader lightingFragmentShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\lighting_fragment.glsl", GL_FRAGMENT_SHADER);
     shaderEngineLighting.addShader(lightingFragmentShader);
     shaderEngineLighting.compile();
 
-    Shader lightVertexShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\GameEngine\\shaders\\light_vertex.glsl", GL_VERTEX_SHADER);
+    Shader lightVertexShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\light_vertex.glsl", GL_VERTEX_SHADER);
     shaderEngineLight.addShader(lightVertexShader);
-    Shader lightFragmentShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\GameEngine\\shaders\\light_fragment.glsl", GL_FRAGMENT_SHADER);
+    Shader lightFragmentShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\light_fragment.glsl", GL_FRAGMENT_SHADER);
     shaderEngineLight.addShader(lightFragmentShader);
     shaderEngineLight.compile();
+
+    ShaderEngine shaderEngineBasic;
+    Shader basicVertexShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\basic_vertex.glsl", GL_VERTEX_SHADER);
+    shaderEngineBasic.addShader(basicVertexShader);
+    Shader basicFragmentShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\basic_fragment.glsl", GL_FRAGMENT_SHADER);
+    shaderEngineBasic.addShader(basicFragmentShader);
+    shaderEngineBasic.compile();
 
     float vertices[] = {
         -0.5f, -0.5f, -0.5f, 
@@ -231,25 +304,61 @@ int main(int argc, char* argv[]) {
 
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
-    Model model("C:\\Users\\NULL\\Documents\\Games\\GameEngine\\res\\teapot.fbx");
+    Model model("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\res\\teapot.fbx");
 
     Camera camera;
+
+    std::vector<float> sphereVertices = computeVertexSphere(16, 36, 5);
+    std::vector<int> sphereIndices = computeIndicesSpheres(16, 32);
+
+    unsigned int VBOSphere, EBOSphere, VAOSphere;
+    glGenVertexArrays(1, &VAOSphere);
+    glGenBuffers(1, &VBOSphere);
+    glGenBuffers(1, &EBOSphere);
+
+    glBindVertexArray(VAOSphere);
+    glBindBuffer(GL_ARRAY_BUFFER, VBOSphere);
+    glBufferData(GL_ARRAY_BUFFER, sphereVertices.size() * sizeof(float), &sphereVertices[0], GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOSphere);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphereIndices.size() * sizeof(int), &sphereIndices[0], GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float), (void*)0);
+
+    glBindVertexArray(0);
+
     // Main loop
     while (running) {
         Time::getInstance().computeDeltaTime();
 
         SDL_Event event;
-        handleEvents(event);
+        handleEvents(event, window);
+
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
-        ImGui::ShowDemoWindow();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        // Handle platform windows for multi-viewports
+        ImGuiIO& io = ImGui::GetIO();
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+            SDL_Window* backup_current_window = SDL_GL_GetCurrentWindow();
+            SDL_GLContext backup_current_context = SDL_GL_GetCurrentContext();
+
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+
+            SDL_GL_MakeCurrent(backup_current_window, backup_current_context);
+        }
 
         camera.computeCameraMovements();
 
+        int xrel, yrel;
+        SDL_GetRelativeMouseState(&xrel, &yrel);
         if (enableMouseCapture) {
-            int xrel, yrel;
-            SDL_GetRelativeMouseState(&xrel, &yrel);
             if (xrel != 0 || yrel != 0) {
                 camera.computeCursorCameraMovements(xrel, yrel);
             }
@@ -259,40 +368,69 @@ int main(int argc, char* argv[]) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glm::mat4 modelMatrix = glm::mat4(1.0f);
+        modelMatrix = glm::rotate(modelMatrix, (float)SDL_GetTicks()/256, glm::vec3(0.0f, 1.0f, 0.0f));
         // modelMatrix = glm::rotate(modelMatrix, (float)SDL_GetTicks64()/128 * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
 
-        glm::mat4 view;
+        glm::mat4 view(1.0f);
         view = camera.getViewMatrix();
 
         glm::mat4 projection;
         projection = glm::perspective(glm::radians(45.0f),
-            WINDOW_RATIO, 0.1f, 100.0f);
+            currrentWindowRatio, 0.1f, 100.0f);
 
-        shaderEngineLight.use();
-        shaderEngineLight.setMat4("projection", projection);
-        shaderEngineLight.setMat4("view", view);
-        modelMatrix = glm::translate(modelMatrix, lightPos);
-        glm::vec3 lightPosition = glm::vec3(modelMatrix[3]);
+        // shaderEngineLight.use();
+        // shaderEngineLight.setMat4("projection", projection);
+        // shaderEngineLight.setMat4("view", view);
+        // modelMatrix = glm::translate(modelMatrix, lightPos);
+        // glm::vec3 lightPosition = glm::vec3(modelMatrix[3]);
 
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
-        shaderEngineLight.setMat4("model", modelMatrix);
+        // modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
+        // shaderEngineLight.setMat4("model", modelMatrix);
 
-        glBindVertexArray(lightVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
+        // glBindVertexArray(lightVAO);
+        // glDrawArrays(GL_TRIANGLES, 0, 36);
+        // glBindVertexArray(0);
 
-        modelMatrix = glm::mat4(1.0f);
+        // modelMatrix = glm::mat4(1.0f);
 
-        shaderEngineLighting.use();
-        shaderEngineLighting.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
-        shaderEngineLighting.setVec3("lightColor", 0.3f, 1.0f, 1.0f);
-        shaderEngineLighting.setVec3("lightPosition", lightPosition.x,
-            lightPosition.y, lightPosition.z);
+        // shaderEngineLighting.use();
+        // shaderEngineLighting.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
 
-        shaderEngineLighting.setMat4("model", modelMatrix);
-        shaderEngineLighting.setMat4("view", view);
-        shaderEngineLighting.setMat4("projection", projection);
-        model.draw(shaderEngineLighting);
+        // shaderEngineLighting.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
+        // shaderEngineLighting.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
+        // shaderEngineLighting.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+        // shaderEngineLighting.setFloat("material.shininess", 32.0f);
+
+        // shaderEngineLighting.setVec3("light.position", lightPosition.x,
+        //     lightPosition.y, lightPosition.z);
+
+        // glm::vec3 lightColor;
+        // lightColor.x = sin(SDL_GetTicks64()/1048 * 2.0f);
+        // lightColor.y = sin(SDL_GetTicks64()/1048 * 0.7f);
+        // lightColor.z = sin(SDL_GetTicks64()/1048 * 1.3f);
+        
+        // glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); 
+        // glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); 
+
+        // shaderEngineLighting.setVec3("light.ambient",  ambientColor);
+        // shaderEngineLighting.setVec3("light.diffuse",  diffuseColor);
+        // shaderEngineLighting.setVec3("light.specular", 1.0f, 1.0f, 1.0f); 
+
+        // shaderEngineLighting.setVec3("cameraPosition", camera.getPosition());
+
+        // shaderEngineLighting.setMat4("model", modelMatrix);
+        // shaderEngineLighting.setMat4("view", view);
+        // shaderEngineLighting.setMat4("projection", projection);
+        // model.draw(shaderEngineLighting);
+        // glBindVertexArray(0);
+
+        shaderEngineBasic.use();
+        shaderEngineBasic.setMat4("model", modelMatrix);
+        shaderEngineBasic.setMat4("view", view);
+        shaderEngineBasic.setMat4("projection", projection);
+
+        glBindVertexArray(VAOSphere);
+        glDrawElements(GL_TRIANGLES, sphereIndices.size(), GL_UNSIGNED_INT, (void*)0);
         glBindVertexArray(0);
 
         ImGui::Render();
