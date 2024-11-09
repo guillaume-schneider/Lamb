@@ -21,41 +21,18 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <mtl_parser.hpp>
+#include <unordered_map>
+#include <material.hpp>
+
+#include <input.hpp>
+
+
 constexpr unsigned int WINDOW_WIDTH = 1980;
 constexpr unsigned int WINDOW_HEIGHT = 1080;
 
 int lastX, lastY;
-bool running = true;
-bool enableMouseCapture = true;
-
 std::vector<int> components;
-
-void toggleMouseCapture(SDL_Window* window) {
-    if (enableMouseCapture) {
-        SDL_SetRelativeMouseMode(SDL_TRUE);
-    } else {
-        SDL_SetRelativeMouseMode(SDL_FALSE);
-        int windowWidth, windowHeight;
-        SDL_GetWindowSize(window, &windowWidth, &windowHeight);
-        int centerX = windowWidth / 2;
-        int centerY = windowHeight / 2;
-
-        SDL_WarpMouseInWindow(window, centerX, centerY);
-    }
-}
-
-void handleEvents(SDL_Event& event, SDL_Window* window) {
-    while (SDL_PollEvent(&event)) {
-        ImGui_ImplSDL2_ProcessEvent(&event);
-        if (event.type == SDL_QUIT) {
-            running = false;
-        }
-        if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) {
-            enableMouseCapture = !enableMouseCapture;
-            toggleMouseCapture(window);
-        }
-    }
-};
 
 std::vector<float> computeVertexSphere(int sectorCount, int stackCount, int radius) {
     float stackAngle, sectorAngle;
@@ -72,7 +49,6 @@ std::vector<float> computeVertexSphere(int sectorCount, int stackCount, int radi
             y = radius * sinf(stackAngle);
             z = radius * cosf(stackAngle) * sinf(sectorAngle);
 
-            // Vertex vertex;
             vertices.push_back(x);
             vertices.push_back(y);
             vertices.push_back(z);
@@ -88,24 +64,22 @@ std::vector<unsigned int> computeIndicesSpheres(int stackCount, int sectorCount)
     for (int i = 0; i < stackCount; i++) {
         k1 = i * (sectorCount + 1);
         k2 = k1 + sectorCount + 1;
-        for (int j = 0; j < sectorCount; j++) {
-
+        for (int j = 0; j < sectorCount; j++, k1++, k2++) {
             if (i != 0) {
-                indices.push_back(k1 + j);
-                indices.push_back(k2 + j);
-                indices.push_back(k1 + j + 1);
+                indices.push_back(k1);
+                indices.push_back(k2);
+                indices.push_back(k1 + 1);
             }
 
             if (i != (stackCount - 1)) {
-                indices.push_back(k1 + j + 1);
-                indices.push_back(k2 + j);
-                indices.push_back(k2 + j + 1);
+                indices.push_back(k1 + 1);
+                indices.push_back(k2);
+                indices.push_back(k2 + 1);
             }
         }
     }
     return indices;
 }
-
 
 
 void APIENTRY openglDebugCallback(GLenum source, GLenum type, GLuint id,
@@ -219,24 +193,24 @@ int main(int argc, char* argv[]) {
 
     ShaderFactory shaderFactory;
 
-    // Shader lightingVertexShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\lighting_vertex.glsl", GL_VERTEX_SHADER);
-    // shaderEngineLighting.addShader(lightingVertexShader);
-    // Shader lightingFragmentShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\lighting_fragment.glsl", GL_FRAGMENT_SHADER);
-    // shaderEngineLighting.addShader(lightingFragmentShader);
-    // shaderEngineLighting.compile();
+    Shader lightingVertexShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\lighting_vertex.glsl", GL_VERTEX_SHADER);
+    shaderEngineLighting.addShader(lightingVertexShader);
+    Shader lightingFragmentShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\lighting_fragment.glsl", GL_FRAGMENT_SHADER);
+    shaderEngineLighting.addShader(lightingFragmentShader);
+    shaderEngineLighting.compile();
 
-    // Shader lightVertexShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\light_vertex.glsl", GL_VERTEX_SHADER);
-    // shaderEngineLight.addShader(lightVertexShader);
-    // Shader lightFragmentShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\light_fragment.glsl", GL_FRAGMENT_SHADER);
-    // shaderEngineLight.addShader(lightFragmentShader);
-    // shaderEngineLight.compile();
+    Shader lightVertexShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\light_vertex.glsl", GL_VERTEX_SHADER);
+    shaderEngineLight.addShader(lightVertexShader);
+    Shader lightFragmentShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\light_fragment.glsl", GL_FRAGMENT_SHADER);
+    shaderEngineLight.addShader(lightFragmentShader);
+    shaderEngineLight.compile();
 
-    ShaderEngine shaderEngineBasic;
-    Shader basicVertexShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\basic_vertex.glsl", GL_VERTEX_SHADER);
-    shaderEngineBasic.addShader(basicVertexShader);
-    Shader basicFragmentShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\basic_fragment.glsl", GL_FRAGMENT_SHADER);
-    shaderEngineBasic.addShader(basicFragmentShader);
-    shaderEngineBasic.compile();
+    // ShaderEngine shaderEngineBasic;
+    // Shader basicVertexShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\basic_vertex.glsl", GL_VERTEX_SHADER);
+    // shaderEngineBasic.addShader(basicVertexShader);
+    // Shader basicFragmentShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\basic_fragment.glsl", GL_FRAGMENT_SHADER);
+    // shaderEngineBasic.addShader(basicFragmentShader);
+    // shaderEngineBasic.compile();
 
     float vertices[] = {
         -0.5f, -0.5f, -0.5f, 
@@ -305,35 +279,53 @@ int main(int argc, char* argv[]) {
     Model model("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\res\\teapot.fbx");
 
     Camera camera;
+
+    // std::vector<float> sphereVertices = computeVertexSphere(2, 2, 1);
+    // std::vector<unsigned int> sphereIndices = computeIndicesSpheres(2, 2);
+
+    // unsigned int VBOSphere, EBOSphere, VAOSphere;
+    // glGenVertexArrays(1, &VAOSphere);
+    // glGenBuffers(1, &VBOSphere);
+    // glGenBuffers(1, &EBOSphere);
+
+    // glBindVertexArray(VAOSphere);
+    // glBindBuffer(GL_ARRAY_BUFFER, VBOSphere);
+    // glBufferData(GL_ARRAY_BUFFER, sphereVertices.size() * sizeof(float), sphereVertices.data(), GL_STATIC_DRAW);
+
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOSphere);
+    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphereIndices.size() * sizeof(unsigned int), sphereIndices.data(), GL_STATIC_DRAW);
+
+    // glEnableVertexAttribArray(0);
+    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); // Corrigé à 0
+
+    // glBindVertexArray(0);
+    // glBindBuffer(GL_ARRAY_BUFFER, 0);
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    // for (int i = 0; i < sphereIndices.size()/3; i += 3)
+    //     std::cout << sphereIndices[i] << " ," << sphereIndices[i + 1] << ", "<< sphereIndices[i + 2] << std::endl; 
     // Main loop
-    while (running) {
 
-        std::vector<float> sphereVertices = computeVertexSphere(18, 32, 1);
-        std::vector<unsigned int> sphereIndices = computeIndicesSpheres(18, 32);
+    // Material goldMaterial;
 
-        unsigned int VBOSphere, EBOSphere, VAOSphere;
-        glGenVertexArrays(1, &VAOSphere);
-        glGenBuffers(1, &VBOSphere);
-        glGenBuffers(1, &EBOSphere);
+    // goldMaterial.ambient = glm::vec3(0.24725f, 0.1995f, 0.0745f);
+    // goldMaterial.diffuse = glm::vec3(0.75164f, 0.60648f, 0.22648f);
+    // goldMaterial.specular = glm::vec3(0.628281f, 0.555802f, 0.366065f);
+    // goldMaterial.shininess = 0.4;
+    // goldMaterial.vertex = &lightingVertexShader;
+    // goldMaterial.fragment = &lightingFragmentShader;
 
-        glBindVertexArray(VAOSphere);
-        glBindBuffer(GL_ARRAY_BUFFER, VBOSphere);
-        glBufferData(GL_ARRAY_BUFFER, sphereVertices.size() * sizeof(float), sphereVertices.data(), GL_STATIC_DRAW);
+    InputHandler::CursorMovementCallback callback = std::bind(&Camera::computeCursorCameraMovements, &camera, std::placeholders::_1, std::placeholders::_2);
+    InputHandlerFactory::createInputHandler(callback);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOSphere);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphereIndices.size() * sizeof(unsigned int), sphereIndices.data(), GL_STATIC_DRAW);
+    std::unordered_map<MaterialType, Material> materials = IO::parseMTL("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\res\\materials.mtl");
+    Material goldMaterial = materials[MaterialType::GOLD];
+    Material silverMaterial = materials[MaterialType::SILVER];
 
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); // Corrigé à 0
-
-        glBindVertexArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    while (InputSystem::getInstance()->shouldStop()) {
 
         Time::getInstance().computeDeltaTime();
-
-        SDL_Event event;
-        handleEvents(event, window);
+        InputSystem::getInstance()->update(window);
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL2_NewFrame();
@@ -354,21 +346,15 @@ int main(int argc, char* argv[]) {
             SDL_GL_MakeCurrent(backup_current_window, backup_current_context);
         }
 
-        camera.computeCameraMovements();
-
-        int xrel, yrel;
-        SDL_GetRelativeMouseState(&xrel, &yrel);
-        if (enableMouseCapture) {
-            if (xrel != 0 || yrel != 0) {
-                camera.computeCursorCameraMovements(xrel, yrel);
-            }
-        }
+        const Uint8* keystate = SDL_GetKeyboardState(NULL);
+        std::vector<Action> actions = getActions(keystate);
+        camera.computeActions(actions);
 
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glm::mat4 modelMatrix = glm::mat4(1.0f);
-        // modelMatrix = glm::rotate(modelMatrix, (float)SDL_GetTicks()/256, glm::vec3(0.0f, 1.0f, 0.0f));
+        modelMatrix = glm::rotate(modelMatrix, (float)SDL_GetTicks()/256, glm::vec3(0.0f, 1.0f, 0.0f));
         // modelMatrix = glm::rotate(modelMatrix, (float)SDL_GetTicks64()/128 * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
 
         glm::mat4 view(1.0f);
@@ -378,60 +364,66 @@ int main(int argc, char* argv[]) {
         projection = glm::perspective(glm::radians(45.0f),
             currrentWindowRatio, 0.1f, 100.0f);
 
-        // shaderEngineLight.use();
-        // shaderEngineLight.setMat4("projection", projection);
-        // shaderEngineLight.setMat4("view", view);
-        // modelMatrix = glm::translate(modelMatrix, lightPos);
-        // glm::vec3 lightPosition = glm::vec3(modelMatrix[3]);
+        shaderEngineLight.use();
+        shaderEngineLight.setMat4("projection", projection);
+        shaderEngineLight.setMat4("view", view);
+        modelMatrix = glm::translate(modelMatrix, lightPos);
+        glm::vec3 lightPosition = glm::vec3(modelMatrix[3]);
 
-        // modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
-        // shaderEngineLight.setMat4("model", modelMatrix);
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
+        shaderEngineLight.setMat4("model", modelMatrix);
 
-        // glBindVertexArray(lightVAO);
-        // glDrawArrays(GL_TRIANGLES, 0, 36);
-        // glBindVertexArray(0);
-
-        // modelMatrix = glm::mat4(1.0f);
-
-        // shaderEngineLighting.use();
-        // shaderEngineLighting.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
-
-        // shaderEngineLighting.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
-        // shaderEngineLighting.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
-        // shaderEngineLighting.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
-        // shaderEngineLighting.setFloat("material.shininess", 32.0f);
-
-        // shaderEngineLighting.setVec3("light.position", lightPosition.x,
-        //     lightPosition.y, lightPosition.z);
-
-        // glm::vec3 lightColor;
-        // lightColor.x = sin(SDL_GetTicks64()/1048 * 2.0f);
-        // lightColor.y = sin(SDL_GetTicks64()/1048 * 0.7f);
-        // lightColor.z = sin(SDL_GetTicks64()/1048 * 1.3f);
-        
-        // glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); 
-        // glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); 
-
-        // shaderEngineLighting.setVec3("light.ambient",  ambientColor);
-        // shaderEngineLighting.setVec3("light.diffuse",  diffuseColor);
-        // shaderEngineLighting.setVec3("light.specular", 1.0f, 1.0f, 1.0f); 
-
-        // shaderEngineLighting.setVec3("cameraPosition", camera.getPosition());
-
-        // shaderEngineLighting.setMat4("model", modelMatrix);
-        // shaderEngineLighting.setMat4("view", view);
-        // shaderEngineLighting.setMat4("projection", projection);
-        // model.draw(shaderEngineLighting);
-        // glBindVertexArray(0);
-
-        shaderEngineBasic.use();
-        shaderEngineBasic.setMat4("model", modelMatrix);
-        shaderEngineBasic.setMat4("view", view);
-        shaderEngineBasic.setMat4("projection", projection);
-
-        glBindVertexArray(VAOSphere);
-        glDrawElements(GL_LINES, sphereIndices.size(), GL_UNSIGNED_INT, (void*)0);
+        glBindVertexArray(lightVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
+
+        modelMatrix = glm::mat4(1.0f);
+
+        shaderEngineLighting.use();
+        shaderEngineLighting.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+
+        shaderEngineLighting.setVec3("material.ambient", silverMaterial.ambient);
+        shaderEngineLighting.setVec3("material.diffuse", silverMaterial.diffuse);
+        shaderEngineLighting.setVec3("material.specular", silverMaterial.specular);
+        shaderEngineLighting.setFloat("material.shininess", silverMaterial.shininess);
+
+        shaderEngineLighting.setVec3("light.position", lightPosition.x,
+            lightPosition.y, lightPosition.z);
+
+        glm::vec3 lightColor;
+        lightColor.x = sin(2.0f);
+        lightColor.y = sin(0.7f);
+        lightColor.z = sin(1.3f);
+        
+        glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); 
+        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); 
+
+        struct Material;
+
+
+        shaderEngineLighting.setVec3("light.ambient",  ambientColor);
+        shaderEngineLighting.setVec3("light.diffuse",  diffuseColor);
+        shaderEngineLighting.setVec3("light.specular", 1.0f, 1.0f, 1.0f); 
+
+        shaderEngineLighting.setVec3("cameraPosition", camera.getPosition());
+
+        shaderEngineLighting.setMat4("model", modelMatrix);
+        shaderEngineLighting.setMat4("view", view);
+        shaderEngineLighting.setMat4("projection", projection);
+        model.draw(shaderEngineLighting);
+        glBindVertexArray(0);
+
+        // shaderEngineBasic.use();
+        // shaderEngineBasic.setMat4("model", modelMatrix);
+        // shaderEngineBasic.setMat4("view", view);
+        // shaderEngineBasic.setMat4("projection", projection);
+
+        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Mode ligne (contour)        glBindVertexArray(VAOSphere);
+        // // glDrawArrays(GL_POINTS, 0, sphereVertices.size() / 3);
+        // glBindVertexArray(VAOSphere);
+        // glDrawElements(GL_TRIANGLES, sphereIndices.size(), GL_UNSIGNED_INT, (void*)0);
+        // glBindVertexArray(0);
+        // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Réinitialise le mode de dessi
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

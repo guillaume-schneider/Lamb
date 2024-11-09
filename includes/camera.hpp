@@ -5,6 +5,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <input.hpp>
+#include <vector>
+
 class Camera {
 public:
     Camera(glm::vec3 position = glm::vec3(0.0f, 1.0f, 3.0f),
@@ -16,7 +19,7 @@ public:
 
     void computeCursorCameraMovements(int, int);
 
-    void computeCameraMovements();
+    void computeActions(const std::vector<Action> &actions);
 
     glm::mat4 getViewMatrix() const {
         return glm::lookAt(m_position, m_position + m_direction, m_up);
@@ -34,6 +37,8 @@ private:
     float pitch = 0.0f;         // Pitch angle
     float m_mouseSensitivity;   // Sensitivity for mouse movement
     float m_cameraSpeed;        // Speed of the camera movement
+
+    void computeAction(Action action);
 };
 
 #endif

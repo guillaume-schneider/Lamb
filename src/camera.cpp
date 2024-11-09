@@ -1,5 +1,7 @@
-#include "camera.hpp"
-#include "time.hpp"
+#include <camera.hpp>
+#include <time.hpp>
+#include <input.hpp>
+#include <vector>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -18,27 +20,33 @@ void Camera::computeCursorCameraMovements(int x, int y) {
     m_direction = glm::normalize(direction);
 }
 
-void Camera::computeCameraMovements() {
-    const Uint8* keystate = SDL_GetKeyboardState(NULL);
+void Camera::computeAction(Action action) {
     float deltaTime = Time::getInstance().getDeltaTime();
-    if (keystate[SDL_SCANCODE_W]) {
-        m_position += m_cameraSpeed * deltaTime * m_direction;
+    switch (action) {
+        case Action::Up:
+            m_position += m_cameraSpeed * deltaTime * m_up;            
+            break;
+        case Action::Down:
+            m_position -= m_cameraSpeed * deltaTime * m_up;
+            break;
+        case Action::Right:
+            m_position += glm::normalize(glm::cross(m_direction, m_up)) 
+                          * m_cameraSpeed * deltaTime;
+            break;
+        case Action::Left:
+            m_position -= glm::normalize(glm::cross(m_direction, m_up))
+                          * m_cameraSpeed * deltaTime;
+            break;
+        case Action::Forward:
+            m_position += m_cameraSpeed * deltaTime * m_direction;
+            break;
+        case Action::Backward:
+            m_position -= m_cameraSpeed * deltaTime * m_direction;
+            break;
     }
-    if (keystate[SDL_SCANCODE_S]) {
-        m_position -= m_cameraSpeed * deltaTime * m_direction;
-    }
-    if (keystate[SDL_SCANCODE_A]) {
-        m_position -= glm::normalize(glm::cross(m_direction, m_up))
-                        * m_cameraSpeed * deltaTime;
-    }
-    if (keystate[SDL_SCANCODE_D]) {
-        m_position += glm::normalize(glm::cross(m_direction, m_up)) 
-                        * m_cameraSpeed * deltaTime;
-    }
-    if (keystate[SDL_SCANCODE_SPACE]) {
-        m_position += m_cameraSpeed * deltaTime * m_up;
-    }
-    if (keystate[SDL_SCANCODE_LCTRL]) {
-        m_position -= m_cameraSpeed * deltaTime * m_up;
-    }
+}
+
+void Camera::computeActions(const std::vector<Action> &actions) {
+    for (auto action : actions)
+        computeAction(action);
 }

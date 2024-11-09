@@ -1,0 +1,13 @@
+newmtl Gold
+Ka 0.24725 0.1995 0.0745     # Couleur ambiante (ambient color)
+Kd 0.75164 0.60648 0.22648   # Couleur diffuse (diffuse color)
+Ks 0.628281 0.555802 0.366065 # Couleur spéculaire (specular color)
+Ns 0.4                     # Brillance (shininess)
+d 1.0                         # Transparence (opacité) : 1.0 est opaque, 0.0 est transparent
+
+newmtl Silver
+Ka 0.19225 0.19225 0.19225   # Couleur ambiante
+Kd 0.50754 0.50754 0.50754   # Couleur diffuse
+Ks 0.508273 0.508273 0.508273 # Couleur spéculaire
+Ns 0.4                      # Brillance
+d 1.0                         # Transparence
