@@ -26,6 +26,9 @@
 #include <material.hpp>
 
 #include <input.hpp>
+#include <materials.hpp>
+
+#include <filesystem>
 
 
 constexpr unsigned int WINDOW_WIDTH = 1980;
@@ -315,12 +318,14 @@ int main(int argc, char* argv[]) {
     // goldMaterial.vertex = &lightingVertexShader;
     // goldMaterial.fragment = &lightingFragmentShader;
 
+    std::filesystem::path currentPath = std::filesystem::current_path();
+    std::cout << "Current path: " << currentPath << std::endl;
+
     InputHandler::CursorMovementCallback callback = std::bind(&Camera::computeCursorCameraMovements, &camera, std::placeholders::_1, std::placeholders::_2);
     InputHandlerFactory::createInputHandler(callback);
 
-    std::unordered_map<MaterialType, Material> materials = IO::parseMTL("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\res\\materials.mtl");
-    Material goldMaterial = materials[MaterialType::GOLD];
-    Material silverMaterial = materials[MaterialType::SILVER];
+    Material goldMaterial = MaterialManager::getInstance()->getMaterial(MaterialType::GOLD);
+    Material silverMaterial = MaterialManager::getInstance()->getMaterial(MaterialType::SILVER);
 
     while (InputSystem::getInstance()->shouldStop()) {
 

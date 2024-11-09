@@ -6,7 +6,8 @@
 #include <sstream>
 #include <shader.hpp>
 
-enum MaterialType {
+
+enum class MaterialType {
     NOT_MATERIAL = -1,
     SILVER,
     GOLD
@@ -15,14 +16,14 @@ enum MaterialType {
 struct Material {
     Material()
         : ambient(glm::vec3(0.0f)), diffuse(glm::vec3(0.0f)), specular(glm::vec3(0.0f)),
-          shininess(0.0f), vertex(nullptr), fragment(nullptr) {}
+          type(MaterialType::NOT_MATERIAL), shininess(0.0f), vertex(nullptr), fragment(nullptr) {}
 
     Material(glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float shininess,
              const Shader* vertex, const Shader* fragment)
         : ambient(ambient), diffuse(diffuse), specular(specular), shininess(shininess),
-          vertex(vertex), fragment(fragment) {}
+          type(MaterialType::NOT_MATERIAL), vertex(vertex), fragment(fragment) {}
 
-    MaterialType type;
+    MaterialType type = MaterialType::NOT_MATERIAL;
     glm::vec3 ambient;
     glm::vec3 diffuse;
     glm::vec3 specular;
@@ -56,7 +57,7 @@ struct Material {
         os << "Material(type: " << Material::getMaterialString(material.type)
            << ", ambient: [" << material.ambient[0] << ", " << material.ambient[1] << ", " << material.ambient[2] << "]"
            << ", diffuse: [" << material.diffuse[0] << ", " << material.diffuse[1] << ", " << material.diffuse[2] << "]"
-           << ", specular: " << material.specular[0] << ", " << material.specular[1] << ", " << material.specular[2] << ")";
+           << ", specular: [" << material.specular[0] << ", " << material.specular[1] << ", " << material.specular[2] << "])";
         return os;
     }
 };
