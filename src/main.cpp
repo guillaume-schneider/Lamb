@@ -14,6 +14,7 @@
 #include "camera.hpp"
 #include "time.hpp"
 #include "model.hpp"
+#include <primitive.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -33,56 +34,6 @@
 
 constexpr unsigned int WINDOW_WIDTH = 1980;
 constexpr unsigned int WINDOW_HEIGHT = 1080;
-
-int lastX, lastY;
-std::vector<int> components;
-
-std::vector<float> computeVertexSphere(int sectorCount, int stackCount, int radius) {
-    float stackAngle, sectorAngle;
-    float x, y, z;
-
-    std::vector<float> vertices;
-    for (int i = 0; i <= stackCount; i ++){
-        stackAngle = M_PI / 2 - (M_PI * float(i) / float(stackCount));
-
-        for (int j = 0; j <= sectorCount; j ++) {
-            sectorAngle = 2 * M_PI * (float(j) / float(sectorCount));
-
-            x = radius * cosf(stackAngle) * cosf(sectorAngle);
-            y = radius * sinf(stackAngle);
-            z = radius * cosf(stackAngle) * sinf(sectorAngle);
-
-            vertices.push_back(x);
-            vertices.push_back(y);
-            vertices.push_back(z);
-        }
-    }
-
-    return vertices;
-}
-
-std::vector<unsigned int> computeIndicesSpheres(int stackCount, int sectorCount) {
-    std::vector<unsigned int> indices;
-    unsigned int k1, k2;
-    for (int i = 0; i < stackCount; i++) {
-        k1 = i * (sectorCount + 1);
-        k2 = k1 + sectorCount + 1;
-        for (int j = 0; j < sectorCount; j++, k1++, k2++) {
-            if (i != 0) {
-                indices.push_back(k1);
-                indices.push_back(k2);
-                indices.push_back(k1 + 1);
-            }
-
-            if (i != (stackCount - 1)) {
-                indices.push_back(k1 + 1);
-                indices.push_back(k2);
-                indices.push_back(k2 + 1);
-            }
-        }
-    }
-    return indices;
-}
 
 
 void APIENTRY openglDebugCallback(GLenum source, GLenum type, GLuint id,
@@ -184,9 +135,7 @@ int main(int argc, char* argv[]) {
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;      // Enable Docking
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;    // Enable Multi-Viewport
 
-    // Setup Dear ImGui style
     ImGui::StyleColorsDark();
-    //ImGui::StyleColorsLight();
 
     ImGui_ImplSDL2_InitForOpenGL(window, context);
     ImGui_ImplOpenGL3_Init();
@@ -208,118 +157,16 @@ int main(int argc, char* argv[]) {
     shaderEngineLight.addShader(lightFragmentShader);
     shaderEngineLight.compile();
 
-    // ShaderEngine shaderEngineBasic;
-    // Shader basicVertexShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\basic_vertex.glsl", GL_VERTEX_SHADER);
-    // shaderEngineBasic.addShader(basicVertexShader);
-    // Shader basicFragmentShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\basic_fragment.glsl", GL_FRAGMENT_SHADER);
-    // shaderEngineBasic.addShader(basicFragmentShader);
-    // shaderEngineBasic.compile();
-
-    float vertices[] = {
-        -0.5f, -0.5f, -0.5f, 
-         0.5f, -0.5f, -0.5f,  
-         0.5f,  0.5f, -0.5f, 
-         0.5f,  0.5f, -0.5f,  
-        -0.5f,  0.5f, -0.5f, 
-        -0.5f, -0.5f, -0.5f, 
-
-        -0.5f, -0.5f,  0.5f, 
-         0.5f, -0.5f,  0.5f,  
-         0.5f,  0.5f,  0.5f,  
-         0.5f,  0.5f,  0.5f,  
-        -0.5f,  0.5f,  0.5f, 
-        -0.5f, -0.5f,  0.5f, 
-
-        -0.5f,  0.5f,  0.5f, 
-        -0.5f,  0.5f, -0.5f, 
-        -0.5f, -0.5f, -0.5f, 
-        -0.5f, -0.5f, -0.5f, 
-        -0.5f, -0.5f,  0.5f, 
-        -0.5f,  0.5f,  0.5f, 
-
-         0.5f,  0.5f,  0.5f,  
-         0.5f,  0.5f, -0.5f,  
-         0.5f, -0.5f, -0.5f,  
-         0.5f, -0.5f, -0.5f,  
-         0.5f, -0.5f,  0.5f,  
-         0.5f,  0.5f,  0.5f,  
-
-        -0.5f, -0.5f, -0.5f, 
-         0.5f, -0.5f, -0.5f,  
-         0.5f, -0.5f,  0.5f,  
-         0.5f, -0.5f,  0.5f,  
-        -0.5f, -0.5f,  0.5f, 
-        -0.5f, -0.5f, -0.5f, 
-
-        -0.5f,  0.5f, -0.5f, 
-         0.5f,  0.5f, -0.5f,  
-         0.5f,  0.5f,  0.5f,  
-         0.5f,  0.5f,  0.5f,  
-        -0.5f,  0.5f,  0.5f, 
-        -0.5f,  0.5f, -0.5f, 
-    };
-
-    unsigned int VBO, lightVAO;
-    glGenVertexArrays(1, &lightVAO);
-    glGenBuffers(1, &VBO);
-
-    glBindVertexArray(lightVAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // we only need to bind to the VBO, the container's VBO's data already contains the data.
-    // set the vertex attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    glBindVertexArray(0); // Unbind the VAO
-
     glEnable(GL_DEPTH_TEST);
+
+    Cube cube(1.0f);
+    Sphere sphere(1.0f);
 
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
     Model model("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\res\\teapot.fbx");
 
-    Camera camera;
-
-    // std::vector<float> sphereVertices = computeVertexSphere(2, 2, 1);
-    // std::vector<unsigned int> sphereIndices = computeIndicesSpheres(2, 2);
-
-    // unsigned int VBOSphere, EBOSphere, VAOSphere;
-    // glGenVertexArrays(1, &VAOSphere);
-    // glGenBuffers(1, &VBOSphere);
-    // glGenBuffers(1, &EBOSphere);
-
-    // glBindVertexArray(VAOSphere);
-    // glBindBuffer(GL_ARRAY_BUFFER, VBOSphere);
-    // glBufferData(GL_ARRAY_BUFFER, sphereVertices.size() * sizeof(float), sphereVertices.data(), GL_STATIC_DRAW);
-
-    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOSphere);
-    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphereIndices.size() * sizeof(unsigned int), sphereIndices.data(), GL_STATIC_DRAW);
-
-    // glEnableVertexAttribArray(0);
-    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); // Corrigé à 0
-
-    // glBindVertexArray(0);
-    // glBindBuffer(GL_ARRAY_BUFFER, 0);
-    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-    // for (int i = 0; i < sphereIndices.size()/3; i += 3)
-    //     std::cout << sphereIndices[i] << " ," << sphereIndices[i + 1] << ", "<< sphereIndices[i + 2] << std::endl; 
-    // Main loop
-
-    // Material goldMaterial;
-
-    // goldMaterial.ambient = glm::vec3(0.24725f, 0.1995f, 0.0745f);
-    // goldMaterial.diffuse = glm::vec3(0.75164f, 0.60648f, 0.22648f);
-    // goldMaterial.specular = glm::vec3(0.628281f, 0.555802f, 0.366065f);
-    // goldMaterial.shininess = 0.4;
-    // goldMaterial.vertex = &lightingVertexShader;
-    // goldMaterial.fragment = &lightingFragmentShader;
-
-    std::filesystem::path currentPath = std::filesystem::current_path();
-    std::cout << "Current path: " << currentPath << std::endl;
+    Camera camera; 
 
     InputHandler::CursorMovementCallback callback = std::bind(&Camera::computeCursorCameraMovements, &camera, std::placeholders::_1, std::placeholders::_2);
     InputHandlerFactory::createInputHandler(callback);
@@ -377,20 +224,18 @@ int main(int argc, char* argv[]) {
 
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
         shaderEngineLight.setMat4("model", modelMatrix);
-
-        glBindVertexArray(lightVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
+    
+        sphere.draw();
 
         modelMatrix = glm::mat4(1.0f);
 
         shaderEngineLighting.use();
         shaderEngineLighting.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
 
-        shaderEngineLighting.setVec3("material.ambient", silverMaterial.ambient);
-        shaderEngineLighting.setVec3("material.diffuse", silverMaterial.diffuse);
-        shaderEngineLighting.setVec3("material.specular", silverMaterial.specular);
-        shaderEngineLighting.setFloat("material.shininess", silverMaterial.shininess);
+        shaderEngineLighting.setVec3("material.ambient", goldMaterial.ambient);
+        shaderEngineLighting.setVec3("material.diffuse", goldMaterial.diffuse);
+        shaderEngineLighting.setVec3("material.specular", goldMaterial.specular);
+        shaderEngineLighting.setFloat("material.shininess", goldMaterial.shininess);
 
         shaderEngineLighting.setVec3("light.position", lightPosition.x,
             lightPosition.y, lightPosition.z);
@@ -403,9 +248,6 @@ int main(int argc, char* argv[]) {
         glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); 
         glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); 
 
-        struct Material;
-
-
         shaderEngineLighting.setVec3("light.ambient",  ambientColor);
         shaderEngineLighting.setVec3("light.diffuse",  diffuseColor);
         shaderEngineLighting.setVec3("light.specular", 1.0f, 1.0f, 1.0f); 
@@ -417,18 +259,6 @@ int main(int argc, char* argv[]) {
         shaderEngineLighting.setMat4("projection", projection);
         model.draw(shaderEngineLighting);
         glBindVertexArray(0);
-
-        // shaderEngineBasic.use();
-        // shaderEngineBasic.setMat4("model", modelMatrix);
-        // shaderEngineBasic.setMat4("view", view);
-        // shaderEngineBasic.setMat4("projection", projection);
-
-        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Mode ligne (contour)        glBindVertexArray(VAOSphere);
-        // // glDrawArrays(GL_POINTS, 0, sphereVertices.size() / 3);
-        // glBindVertexArray(VAOSphere);
-        // glDrawElements(GL_TRIANGLES, sphereIndices.size(), GL_UNSIGNED_INT, (void*)0);
-        // glBindVertexArray(0);
-        // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Réinitialise le mode de dessi
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
