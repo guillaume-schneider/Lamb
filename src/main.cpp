@@ -158,7 +158,12 @@ int main(int argc, char* argv[]) {
 
     Cube cube(1.0f);
     cube.setTexture("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\res\\box.bmp");
+    cube.setShaderEngine(shaderEngineLight);
     Sphere sphere(1.0f);
+
+    Cube cubeLighting(1.0f);
+    cubeLighting.setShaderEngine(shaderEngineLighting);
+    cubeLighting.setTexture("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\res\\box.bmp");
 
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
@@ -223,41 +228,32 @@ int main(int argc, char* argv[]) {
 
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
         shaderEngineLight.setMat4("model", modelMatrix);
-        shaderEngineLight.setInt("texture1", 0);
     
-        cube.draw(shaderEngineLight);
+        cube.draw();
 
         modelMatrix = glm::mat4(1.0f);
 
         shaderEngineLighting.use();
         shaderEngineLighting.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
 
-        shaderEngineLighting.setVec3("material.ambient", copperMaterial.ambient);
-        shaderEngineLighting.setVec3("material.diffuse", copperMaterial.diffuse);
-        shaderEngineLighting.setVec3("material.specular", copperMaterial.specular);
-        shaderEngineLighting.setFloat("material.shininess", copperMaterial.shininess);
+        shaderEngineLighting.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+        shaderEngineLighting.setFloat("material.shininess", 64.0f);
 
         shaderEngineLighting.setVec3("light.position", lightPosition.x,
             lightPosition.y, lightPosition.z);
 
-        glm::vec3 lightColor;
-        lightColor.x = sin(2.0f);
-        lightColor.y = sin(0.7f);
-        lightColor.z = sin(1.3f);
-        
-        glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); 
-        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); 
-
-        shaderEngineLighting.setVec3("light.ambient",  ambientColor);
-        shaderEngineLighting.setVec3("light.diffuse",  diffuseColor);
-        shaderEngineLighting.setVec3("light.specular", 1.0f, 1.0f, 1.0f); 
+        shaderEngineLighting.setVec3("light.ambient", 0.2f, 0.2f, 0.2f); 
+        shaderEngineLighting.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
+        shaderEngineLighting.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
 
         shaderEngineLighting.setVec3("cameraPosition", camera.getPosition());
 
         shaderEngineLighting.setMat4("model", modelMatrix);
         shaderEngineLighting.setMat4("view", view);
         shaderEngineLighting.setMat4("projection", projection);
-        model.draw(shaderEngineLighting);
+        cubeLighting.draw();
+
+        // model.draw(shaderEngineLighting);
         glBindVertexArray(0);
 
         ImGui::Render();

@@ -17,7 +17,7 @@ void Mesh::setupMesh() {
     glGenVertexArrays(1, &m_VAO);
     glGenBuffers(1, &m_VBO);
     glGenBuffers(1, &m_EBO);
-  
+
     glBindVertexArray(m_VAO);
     glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
 
@@ -131,7 +131,7 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
             aiFace face = mesh->mFaces[i];
             for (unsigned int j = 0; j < face.mNumIndices; j++)
                 indices.push_back(face.mIndices[j]);
-        }
+    }
 
     if (mesh->mMaterialIndex >= 0) {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];

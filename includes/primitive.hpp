@@ -3,66 +3,22 @@
 
 
 #include <vector>
-#include <glad/glad.h>
 #include <sstream>
-#include <shader.hpp>
+#include <renderable.hpp>
 
 
-#define MAX_BONE_INFLUENCE 4
-
-
-struct Vertex {
-    // position
-    glm::vec3 position;
-    // normal
-    glm::vec3 normal;
-    // texCoords
-    glm::vec2 textureCoordinates;
-    // tangent
-    glm::vec3 tangent;
-    // bitangent
-    glm::vec3 biTangent;
-    // bone indexes which will influence this vertex
-    int m_BoneIDs[MAX_BONE_INFLUENCE];
-    // weights from each bone
-    float m_Weights[MAX_BONE_INFLUENCE];
-};
-
-
-struct Texture {
-    GLuint id;
-    std::string type;
-    std::string path;
-};
-
-
-class Primitive {
+class Primitive : public Renderable {
 public:
-    Primitive() : m_VAO(0), m_VBO(0), m_EBO(0) {}
-    virtual ~Primitive() {
-        glDeleteBuffers(1, &m_VBO);
-        glDeleteBuffers(1, &m_EBO);
-        glDeleteVertexArrays(1, &m_VAO);
-    }
-
-    void draw(ShaderEngine&);
-    std::vector<float> getVertices() { return m_vertices; }
-    std::vector<unsigned int> getIndices() { return m_indices; }
-    void setTexture(const char* path);
+    Primitive() : Renderable() {}
+    virtual ~Primitive() {}
 protected:
-    GLuint m_VAO, m_VBO, m_EBO;
-    std::vector<float> m_vertices;
-    std::vector<unsigned int> m_indices;
-    std::vector<Texture> m_textures;
-
     void init() {
         m_vertices = computeVertices();
         m_indices = computeIndices();
-        setupDrawing();
+        setup();
     }
-    virtual std::vector<float> computeVertices() = 0;
+    virtual std::vector<Vertex> computeVertices() = 0;
     virtual std::vector<unsigned int> computeIndices() = 0;
-    void setupDrawing();
 };
 
 class Cube : public Primitive {
@@ -85,9 +41,9 @@ public:
         // Print vertices
         os << "Vertices: ";
         for (size_t i = 0; i < cube.m_vertices.size(); i += 3) {
-            os << "(" << cube.m_vertices[i] << ", "
-               << cube.m_vertices[i + 1] << ", "
-               << cube.m_vertices[i + 2] << ") ";
+            os << "(" << cube.m_vertices[i].position[0] << ", "
+               << cube.m_vertices[i].position[1] << ", "
+               << cube.m_vertices[i].position[2] << ") ";
         }
         os << "\n";
 
@@ -101,7 +57,7 @@ public:
         return os;
     }
 protected:
-    std::vector<float> computeVertices() override;
+    std::vector<Vertex> computeVertices() override;
     std::vector<unsigned int> computeIndices() override;
 private:
     float m_scale{1.0f};
@@ -121,7 +77,7 @@ public:
     void setStackCount(int value) { m_stackCount = value; }
     void setSectorCount(int value) { m_sectorCount = value; }
     void setRadius(float value) { m_radius = value; }
-    std::vector<float> computeVertices() override;
+    std::vector<Vertex> computeVertices() override;
     std::vector<unsigned int> computeIndices() override;
 private:
     int m_stackCount{16};
