@@ -60,70 +60,116 @@ void Primitive::draw(ShaderEngine& engine) {
 }
 
 std::vector<unsigned int> Cube::computeIndices() {
-    return {
-        // Front face
-        0, 1, 2, // B, C, D
-        2, 3, 0, // D, A, B
+    std::vector<unsigned int> indices;
+    for (int face = 0; face < 6; ++face) {
+        unsigned int baseIndex = face * 4;
 
-        // Back face
-        4, 5, 6, 
-        6, 7, 4, 
+        indices.push_back(baseIndex + 2);
+        indices.push_back(baseIndex);
+        indices.push_back(baseIndex + 3);
 
-        // Left face
-        8, 9, 10,
-        10, 11, 8, 
-
-        // Right face
-        12, 13, 14,
-        14, 15, 12,
-
-        // Top face
-        16, 17, 18,
-        18, 19, 16,
-
-        // Bottom face
-        20, 21, 22,
-        22, 23, 20
-    };
+        indices.push_back(baseIndex);
+        indices.push_back(baseIndex + 1);
+        indices.push_back(baseIndex + 3);
+    }
+    return indices;
 }
 
 std::vector<float> Cube::computeVertices() {
-    return {
-        -0.5f * m_scale, -0.5f * m_scale,  0.5f * m_scale, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,  // Bottom-left
-         0.5f * m_scale, -0.5f * m_scale,  0.5f * m_scale, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,  // Bottom-right
-         0.5f * m_scale,  0.5f * m_scale,  0.5f * m_scale, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,  // Top-right
-        -0.5f * m_scale,  0.5f * m_scale,  0.5f * m_scale, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,  // Top-left
+    // Half size for easier positioning
+    float halfSize = m_scale / 2.0f;
 
-        // Back face (z = -0.5)
-        -0.5f * m_scale, -0.5f * m_scale, -0.5f * m_scale, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,  // Bottom-left
-         0.5f * m_scale, -0.5f * m_scale, -0.5f * m_scale, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,  // Bottom-right
-         0.5f * m_scale,  0.5f * m_scale, -0.5f * m_scale, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,  // Top-right
-        -0.5f * m_scale,  0.5f * m_scale, -0.5f * m_scale, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,  // Top-left
+    std::vector<float> vertices;
+    // Loop over 6 faces (4 vertices per face)
+    for (int face = 0; face < 6; ++face) {
+        glm::vec3 normal;
+        glm::vec2 texCoords[4];
 
-        // Left face (x = -0.5)
-        -0.5f * m_scale, -0.5f * m_scale, -0.5f * m_scale, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,  // Bottom-left
-        -0.5f * m_scale, -0.5f * m_scale,  0.5f * m_scale, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,  // Bottom-right
-        -0.5f * m_scale,  0.5f * m_scale,  0.5f * m_scale, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // Top-right
-        -0.5f * m_scale,  0.5f * m_scale, -0.5f * m_scale, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,  // Top-left
+        // Determine the normal and texture coordinates for each face
+        switch (face) {
+            case 0:  // Front face
+                normal = glm::vec3(0.0f, 0.0f, 1.0f);
+                texCoords[0] = glm::vec2(0.0f, 0.0f); // Bottom-left
+                texCoords[1] = glm::vec2(1.0f, 0.0f); // Bottom-right
+                texCoords[2] = glm::vec2(0.0f, 1.0f); // Top-left
+                texCoords[3] = glm::vec2(1.0f, 1.0f); // Top-right
+                break;
+            case 1:  // Back face
+                normal = glm::vec3(0.0f, 0.0f, -1.0f);
+                texCoords[0] = glm::vec2(1.0f, 0.0f);
+                texCoords[1] = glm::vec2(0.0f, 0.0f);
+                texCoords[2] = glm::vec2(1.0f, 1.0f);
+                texCoords[3] = glm::vec2(0.0f, 1.0f);
+                break;
+            case 2:  // Right face
+                normal = glm::vec3(1.0f, 0.0f, 0.0f);
+                texCoords[0] = glm::vec2(0.0f, 0.0f);
+                texCoords[1] = glm::vec2(1.0f, 0.0f);
+                texCoords[2] = glm::vec2(0.0f, 1.0f);
+                texCoords[3] = glm::vec2(1.0f, 1.0f);
+                break;
+            case 3:  // Left face
+                normal = glm::vec3(-1.0f, 0.0f, 0.0f);
+                texCoords[0] = glm::vec2(1.0f, 0.0f);
+                texCoords[1] = glm::vec2(0.0f, 0.0f);
+                texCoords[2] = glm::vec2(1.0f, 1.0f);
+                texCoords[3] = glm::vec2(0.0f, 1.0f);
+                break;
+            case 4:  // Top face
+                normal = glm::vec3(0.0f, 1.0f, 0.0f);
+                texCoords[0] = glm::vec2(0.0f, 0.0f);
+                texCoords[1] = glm::vec2(1.0f, 0.0f);
+                texCoords[2] = glm::vec2(0.0f, 1.0f);
+                texCoords[3] = glm::vec2(1.0f, 1.0f);
+                break;
+            case 5:  // Bottom face
+                normal = glm::vec3(0.0f, -1.0f, 0.0f);
+                texCoords[0] = glm::vec2(0.0f, 1.0f);
+                texCoords[1] = glm::vec2(1.0f, 1.0f);
+                texCoords[2] = glm::vec2(0.0f, 0.0f);
+                texCoords[3] = glm::vec2(1.0f, 0.0f);
+                break;
+        }
 
-        // Right face (x = 0.5)
-         0.5f * m_scale, -0.5f * m_scale, -0.5f * m_scale, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,  // Bottom-left
-         0.5f * m_scale, -0.5f * m_scale,  0.5f * m_scale, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,  // Bottom-right
-         0.5f * m_scale,  0.5f * m_scale,  0.5f * m_scale, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // Top-right
-         0.5f * m_scale,  0.5f * m_scale, -0.5f * m_scale, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,  // Top-left
+        // Create 4 vertices per face and calculate positions
+        for (int i = 0; i < 4; ++i) {
+            float x = (i % 2 == 0) ? -halfSize : halfSize;  // Alternates between -halfSize and halfSize
+            float z = (i / 2 == 0) ? -halfSize : halfSize; // Alternates between -halfSize and halfSize
 
-        // Top face (y = 0.5)
-        -0.5f * m_scale,  0.5f * m_scale, -0.5f * m_scale, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,  // Bottom-left
-         0.5f * m_scale,  0.5f * m_scale, -0.5f * m_scale, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,  // Bottom-right
-         0.5f * m_scale,  0.5f * m_scale,  0.5f * m_scale, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,  // Top-right
-        -0.5f * m_scale,  0.5f * m_scale,  0.5f * m_scale, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,  // Top-left
+            // Determine position based on the face
+            glm::vec3 position;
+            switch (face) {
+                case 0: position = glm::vec3(x, z, -halfSize); break;  // Front face
+                case 1: position = glm::vec3(x, z, halfSize); break;   // Back face
+                case 2: position = glm::vec3(halfSize, z, x); break;   // Right face
+                case 3: position = glm::vec3(-halfSize, z, x); break;  // Left face
+                case 4: position = glm::vec3(x, halfSize, z); break;   // Top face
+                case 5: position = glm::vec3(x, -halfSize, z); break;  // Bottom face
+            }
 
-        // Bottom face (y = -0.5)
-        -0.5f * m_scale, -0.5f * m_scale, -0.5f * m_scale, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,  // Bottom-left
-         0.5f * m_scale, -0.5f * m_scale, -0.5f * m_scale, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,  // Bottom-right
-         0.5f * m_scale, -0.5f * m_scale,  0.5f * m_scale, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,  // Top-right
-        -0.5f * m_scale, -0.5f * m_scale,  0.5f * m_scale, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f   // Top-left
-    };
+            // Add the vertex with position, normal, and texture coordinates
+            // Vertex vertex;
+            // vertex.position = position;
+            // vertex.normal = normal;
+            // vertex.texCoords = texCoords[i];
+            vertices.push_back(position.x);
+            vertices.push_back(position.y);
+            vertices.push_back(position.z);
+
+            vertices.push_back(normal.x);
+            vertices.push_back(normal.y);
+            vertices.push_back(normal.z);
+        
+            vertices.push_back(texCoords[i].x);
+            vertices.push_back(texCoords[i].y);
+        }
+    }
+
+    for (int i = 0; i < vertices.size(); i += 8) {
+        std::cout << vertices[i] << ", " << vertices[i + 1] << ", " << vertices[i + 2] << std::endl;
+    }
+
+    return vertices;
 }
 
 std::vector<float> Sphere::computeVertices() {
