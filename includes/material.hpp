@@ -10,7 +10,8 @@
 enum class MaterialType {
     NOT_MATERIAL = -1,
     SILVER,
-    GOLD
+    GOLD,
+    COPPER
 };
 
 struct Material {
@@ -37,6 +38,8 @@ struct Material {
             return MaterialType::SILVER;
         } else if (mtl_type == "Gold") {
             return MaterialType::GOLD;
+        } else if (mtl_type == "Copper") {
+            return MaterialType::COPPER;
         } else {
             return MaterialType::NOT_MATERIAL;
         }
@@ -48,6 +51,8 @@ struct Material {
                 return "Gold";
             case MaterialType::SILVER:
                 return "Silver";
+            case MaterialType::COPPER:
+                return "Copper";
             default:
                 return "Not material";
         }

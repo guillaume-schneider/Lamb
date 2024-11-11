@@ -23,13 +23,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <mtl_parser.hpp>
-#include <unordered_map>
 #include <material.hpp>
 
 #include <input.hpp>
 #include <materials.hpp>
-
-#include <filesystem>
 
 
 constexpr unsigned int WINDOW_WIDTH = 1980;
@@ -160,6 +157,7 @@ int main(int argc, char* argv[]) {
     glEnable(GL_DEPTH_TEST);
 
     Cube cube(1.0f);
+    cube.setTexture("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\res\\box.bmp");
     Sphere sphere(1.0f);
 
     SDL_SetRelativeMouseMode(SDL_TRUE);
@@ -173,6 +171,7 @@ int main(int argc, char* argv[]) {
 
     Material goldMaterial = MaterialManager::getInstance()->getMaterial(MaterialType::GOLD);
     Material silverMaterial = MaterialManager::getInstance()->getMaterial(MaterialType::SILVER);
+    Material copperMaterial = MaterialManager::getInstance()->getMaterial(MaterialType::COPPER);
 
     while (InputSystem::getInstance()->shouldStop()) {
 
@@ -206,7 +205,7 @@ int main(int argc, char* argv[]) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glm::mat4 modelMatrix = glm::mat4(1.0f);
-        modelMatrix = glm::rotate(modelMatrix, (float)SDL_GetTicks()/256, glm::vec3(0.0f, 1.0f, 0.0f));
+        // modelMatrix = glm::rotate(modelMatrix, (float)SDL_GetTicks()/256, glm::vec3(0.0f, 1.0f, 0.0f));
         // modelMatrix = glm::rotate(modelMatrix, (float)SDL_GetTicks64()/128 * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
 
         glm::mat4 view(1.0f);
@@ -224,18 +223,19 @@ int main(int argc, char* argv[]) {
 
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
         shaderEngineLight.setMat4("model", modelMatrix);
+        shaderEngineLight.setInt("texture1", 0);
     
-        sphere.draw();
+        cube.draw(shaderEngineLight);
 
         modelMatrix = glm::mat4(1.0f);
 
         shaderEngineLighting.use();
         shaderEngineLighting.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
 
-        shaderEngineLighting.setVec3("material.ambient", goldMaterial.ambient);
-        shaderEngineLighting.setVec3("material.diffuse", goldMaterial.diffuse);
-        shaderEngineLighting.setVec3("material.specular", goldMaterial.specular);
-        shaderEngineLighting.setFloat("material.shininess", goldMaterial.shininess);
+        shaderEngineLighting.setVec3("material.ambient", copperMaterial.ambient);
+        shaderEngineLighting.setVec3("material.diffuse", copperMaterial.diffuse);
+        shaderEngineLighting.setVec3("material.specular", copperMaterial.specular);
+        shaderEngineLighting.setFloat("material.shininess", copperMaterial.shininess);
 
         shaderEngineLighting.setVec3("light.position", lightPosition.x,
             lightPosition.y, lightPosition.z);

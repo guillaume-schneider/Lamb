@@ -6,51 +6,26 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include "shader.hpp"
+#include <primitive.hpp>
 
-
-#define MAX_BONE_INFLUENCE 4
-
-struct Vertex {
-    // position
-    glm::vec3 position;
-    // normal
-    glm::vec3 normal;
-    // texCoords
-    glm::vec2 textureCoordinates;
-    // tangent
-    glm::vec3 tangent;
-    // bitangent
-    glm::vec3 biTangent;
-	//bone indexes which will influence this vertex
-	int m_BoneIDs[MAX_BONE_INFLUENCE];
-	//weights from each bone
-	float m_Weights[MAX_BONE_INFLUENCE];
-};
-
-
-struct Texture {
-    unsigned int id;
-    std::string type;
-    std::string path;
-};
 
 class Mesh {
 public:
-    std::vector<Vertex> vertices;
-    std::vector<unsigned int> indices;
-    std::vector<Texture> textures;
+    std::vector<Vertex> m_vertices;
+    std::vector<unsigned int> m_indices;
+    std::vector<Texture> m_textures;
 
     Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
         std::vector<Texture> textures) {
-        this->vertices = vertices;
-        this->indices = indices;
-        this->textures = textures;
+        m_vertices = vertices;
+        m_indices = indices;
+        m_textures = textures;
 
         setupMesh();
     };
     void draw(ShaderEngine &shader);
 private:
-    unsigned int VAO, VBO, EBO;
+    unsigned int m_VAO, m_VBO, m_EBO;
     void setupMesh();
 };
 
@@ -59,9 +34,9 @@ class Model {
         Model(std::string const path);
         void draw(ShaderEngine& shader);
     private:
-        std::vector<Mesh> meshes;
-        std::string directory;
-        std::vector<Texture> textures_loaded;
+        std::vector<Mesh> m_meshes;
+        std::string m_directory;
+        std::vector<Texture> m_texturesLoaded;
 
         void loadModel(std::string path);
         void processNode(aiNode* node, const aiScene* scene);

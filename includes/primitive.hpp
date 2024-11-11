@@ -5,10 +5,39 @@
 #include <vector>
 #include <glad/glad.h>
 #include <sstream>
+#include <shader.hpp>
+
+
+#define MAX_BONE_INFLUENCE 4
+
+
+struct Vertex {
+    // position
+    glm::vec3 position;
+    // normal
+    glm::vec3 normal;
+    // texCoords
+    glm::vec2 textureCoordinates;
+    // tangent
+    glm::vec3 tangent;
+    // bitangent
+    glm::vec3 biTangent;
+    // bone indexes which will influence this vertex
+    int m_BoneIDs[MAX_BONE_INFLUENCE];
+    // weights from each bone
+    float m_Weights[MAX_BONE_INFLUENCE];
+};
+
+
+struct Texture {
+    GLuint id;
+    std::string type;
+    std::string path;
+};
 
 
 class Primitive {
-public:    
+public:
     Primitive() : m_VAO(0), m_VBO(0), m_EBO(0) {}
     virtual ~Primitive() {
         glDeleteBuffers(1, &m_VBO);
@@ -16,13 +45,15 @@ public:
         glDeleteVertexArrays(1, &m_VAO);
     }
 
-    void draw();
+    void draw(ShaderEngine&);
     std::vector<float> getVertices() { return m_vertices; }
     std::vector<unsigned int> getIndices() { return m_indices; }
+    void setTexture(const char* path);
 protected:
     GLuint m_VAO, m_VBO, m_EBO;
     std::vector<float> m_vertices;
     std::vector<unsigned int> m_indices;
+    std::vector<Texture> m_textures;
 
     void init() {
         m_vertices = computeVertices();
@@ -82,11 +113,11 @@ public:
         { init(); }
     Sphere(float radius) : Sphere() {
         m_radius = radius;
-    } 
+    }
     Sphere(int stackCount, int sectorCount, float radius) : Sphere(radius) {
         m_stackCount = stackCount;
         m_sectorCount = sectorCount;
-    } 
+    }
     void setStackCount(int value) { m_stackCount = value; }
     void setSectorCount(int value) { m_sectorCount = value; }
     void setRadius(float value) { m_radius = value; }

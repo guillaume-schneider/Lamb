@@ -1,7 +1,10 @@
 #include <primitive.hpp>
 #include <glad/glad.h>
 #include <vector>
+#include <string>
 #include <iostream>
+#include <shader.hpp>
+#include "stb_image.h"
 
 
 #ifndef PI
@@ -29,15 +32,28 @@ void Primitive::setupDrawing() {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(unsigned int),
                     &m_indices[0], GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-
 }
 
-void Primitive::draw() {
+void Primitive::draw(ShaderEngine& engine) {
+    if (m_textures.size() > 0) {
+        for (int i = 0; i < m_textures.size(); i++) {
+            glActiveTexture(GL_TEXTURE0 + i);
+            engine.setInt("texture" + std::to_string(m_textures[i].id), i);
+            glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
+        }
+    }
+
     glBindVertexArray(m_VAO);
     glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
@@ -48,34 +64,65 @@ std::vector<unsigned int> Cube::computeIndices() {
         // Front face
         0, 1, 2, // B, C, D
         2, 3, 0, // D, A, B
+
         // Back face
-        4, 5, 6,
-        6, 7, 4,
+        4, 5, 6, 
+        6, 7, 4, 
+
         // Left face
-        4, 0, 3,
-        3, 7, 4,
+        8, 9, 10,
+        10, 11, 8, 
+
         // Right face
-        1, 5, 6,
-        6, 2, 1,
+        12, 13, 14,
+        14, 15, 12,
+
         // Top face
-        3, 2, 6,
-        6, 7, 3,
+        16, 17, 18,
+        18, 19, 16,
+
         // Bottom face
-        4, 5, 1,
-        1, 0, 4
+        20, 21, 22,
+        22, 23, 20
     };
 }
 
 std::vector<float> Cube::computeVertices() {
     return {
-        -0.5f * m_scale, -0.5f * m_scale,  0.5f * m_scale,  // Front face
-         0.5f * m_scale, -0.5f * m_scale,  0.5f * m_scale,
-         0.5f * m_scale,  0.5f * m_scale,  0.5f * m_scale,
-        -0.5f * m_scale,  0.5f * m_scale,  0.5f * m_scale,
-        -0.5f * m_scale, -0.5f * m_scale, -0.5f * m_scale,  // Back face
-         0.5f * m_scale, -0.5f * m_scale, -0.5f * m_scale,
-         0.5f * m_scale,  0.5f * m_scale, -0.5f * m_scale,
-        -0.5f * m_scale,  0.5f * m_scale, -0.5f * m_scale
+        -0.5f * m_scale, -0.5f * m_scale,  0.5f * m_scale, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,  // Bottom-left
+         0.5f * m_scale, -0.5f * m_scale,  0.5f * m_scale, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,  // Bottom-right
+         0.5f * m_scale,  0.5f * m_scale,  0.5f * m_scale, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,  // Top-right
+        -0.5f * m_scale,  0.5f * m_scale,  0.5f * m_scale, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,  // Top-left
+
+        // Back face (z = -0.5)
+        -0.5f * m_scale, -0.5f * m_scale, -0.5f * m_scale, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,  // Bottom-left
+         0.5f * m_scale, -0.5f * m_scale, -0.5f * m_scale, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,  // Bottom-right
+         0.5f * m_scale,  0.5f * m_scale, -0.5f * m_scale, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,  // Top-right
+        -0.5f * m_scale,  0.5f * m_scale, -0.5f * m_scale, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,  // Top-left
+
+        // Left face (x = -0.5)
+        -0.5f * m_scale, -0.5f * m_scale, -0.5f * m_scale, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,  // Bottom-left
+        -0.5f * m_scale, -0.5f * m_scale,  0.5f * m_scale, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,  // Bottom-right
+        -0.5f * m_scale,  0.5f * m_scale,  0.5f * m_scale, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // Top-right
+        -0.5f * m_scale,  0.5f * m_scale, -0.5f * m_scale, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,  // Top-left
+
+        // Right face (x = 0.5)
+         0.5f * m_scale, -0.5f * m_scale, -0.5f * m_scale, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,  // Bottom-left
+         0.5f * m_scale, -0.5f * m_scale,  0.5f * m_scale, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,  // Bottom-right
+         0.5f * m_scale,  0.5f * m_scale,  0.5f * m_scale, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // Top-right
+         0.5f * m_scale,  0.5f * m_scale, -0.5f * m_scale, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,  // Top-left
+
+        // Top face (y = 0.5)
+        -0.5f * m_scale,  0.5f * m_scale, -0.5f * m_scale, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,  // Bottom-left
+         0.5f * m_scale,  0.5f * m_scale, -0.5f * m_scale, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,  // Bottom-right
+         0.5f * m_scale,  0.5f * m_scale,  0.5f * m_scale, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,  // Top-right
+        -0.5f * m_scale,  0.5f * m_scale,  0.5f * m_scale, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,  // Top-left
+
+        // Bottom face (y = -0.5)
+        -0.5f * m_scale, -0.5f * m_scale, -0.5f * m_scale, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,  // Bottom-left
+         0.5f * m_scale, -0.5f * m_scale, -0.5f * m_scale, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,  // Bottom-right
+         0.5f * m_scale, -0.5f * m_scale,  0.5f * m_scale, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,  // Top-right
+        -0.5f * m_scale, -0.5f * m_scale,  0.5f * m_scale, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f   // Top-left
     };
 }
 
@@ -124,4 +171,45 @@ std::vector<unsigned int> Sphere::computeIndices() {
         }
     }
     return indices;
+}
+
+void Primitive::setTexture(const char* path) {
+    std::string filename(path);
+    
+    Texture texture;
+    texture.path = std::string(path);
+    glGenTextures(1, &texture.id);
+    if (texture.id == 0) {
+        std::cerr << "Error: Failed to generate texture ID!" << std::endl;
+        return;
+    }
+
+    int width, height, nrComponents;
+    unsigned char *data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
+    if (data) {
+        GLenum format = GL_RGB;  // Default format
+        if (nrComponents == 1)
+            format = GL_RED;
+        else if (nrComponents == 3)
+            format = GL_RGB;
+        else if (nrComponents == 4)
+            format = GL_RGBA;
+
+        glBindTexture(GL_TEXTURE_2D, texture.id);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        // Set texture wrapping and filtering options
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        stbi_image_free(data);
+
+        m_textures.push_back(texture);
+    } else {
+        std::cerr << "Texture failed to load at path: " << path << std::endl;
+        stbi_image_free(data);
+    }
 }

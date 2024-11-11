@@ -11,3 +11,10 @@ Kd 0.50754 0.50754 0.50754   # Couleur diffuse
 Ks 0.508273 0.508273 0.508273 # Couleur spéculaire
 Ns 0.4                      # Brillance
 d 1.0                         # Transparence
+
+newmtl Copper
+Ka 0.19125 0.0735 0.0225
+Kd 0.7038 0.27048 0.0828
+Ks 0.256777 0.137622 0.086014
+Ns 0.1
+d 1.0
