@@ -38,14 +38,12 @@ void Renderable::setup() {
 
 
 void Renderable::draw() {
-    if (m_engine != nullptr) {
-        m_engine->use();
-        if (!m_textures.empty()) {
-            for (int i = 0; i < m_textures.size(); i++) {
-                glActiveTexture(GL_TEXTURE0 + i);
-                m_engine->setInt("texture" + std::to_string(i), i);
-                glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
-            }
+    m_engine.use();
+    if (!m_textures.empty()) {
+        for (int i = 0; i < m_textures.size(); i++) {
+            glActiveTexture(GL_TEXTURE0 + i);
+            m_engine.setInt("texture" + std::to_string(i), i);
+            glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
         }
     }
 
@@ -96,4 +94,27 @@ void Renderable::setTexture(const char* path) {
         std::cerr << "Texture failed to load at path: " << path << std::endl;
         stbi_image_free(data);
     }
+}
+
+std::ostream& operator<<(std::ostream& os, const Renderable& renderable) {
+    os << "Renderable Object:\n";
+    os << "Vertices:\n";
+    for (const auto& vertex : renderable.m_vertices) {
+        os << "  Position: (" << vertex.position.x << ", " << vertex.position.y << ", " << vertex.position.z << "), ";
+        os << "Normal: (" << vertex.normal.x << ", " << vertex.normal.y << ", " << vertex.normal.z << "), ";
+        os << "Texture Coordinates: (" << vertex.textureCoordinates.x << ", " << vertex.textureCoordinates.y << ")\n";
+    }
+
+    os << "Indices:\n";
+    for (const auto& index : renderable.m_indices) {
+        os << "  " << index << " ";
+    }
+    os << "\n";
+
+    os << "Textures:\n";
+    for (const auto& texture : renderable.m_textures) {
+        os << "  ID: " << texture.id << ", Type: " << texture.type << ", Path: " << texture.path << "\n";
+    }
+    
+    return os;
 }

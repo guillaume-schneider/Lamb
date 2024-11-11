@@ -35,14 +35,14 @@ std::vector<Vertex> Cube::computeVertices() {
         // Determine the normal and texture coordinates for each face
         switch (face) {
             case 0:  // Front face
-                normal = glm::vec3(0.0f, 0.0f, 1.0f);
+                normal = glm::vec3(0.0f, 0.0f, -1.0f);
                 texCoords[0] = glm::vec2(0.0f, 0.0f); // Bottom-left
                 texCoords[1] = glm::vec2(1.0f, 0.0f); // Bottom-right
                 texCoords[2] = glm::vec2(0.0f, 1.0f); // Top-left
                 texCoords[3] = glm::vec2(1.0f, 1.0f); // Top-right
                 break;
             case 1:  // Back face
-                normal = glm::vec3(0.0f, 0.0f, -1.0f);
+                normal = glm::vec3(0.0f, 0.0f, 1.0f);
                 texCoords[0] = glm::vec2(1.0f, 0.0f);
                 texCoords[1] = glm::vec2(0.0f, 0.0f);
                 texCoords[2] = glm::vec2(1.0f, 1.0f);

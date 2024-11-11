@@ -34,28 +34,6 @@ public:
         computeVertices();
     }
     float getScale() { return m_scale; }
-
-    friend std::ostream& operator<<(std::ostream& os, const Cube& cube) {
-        os << "Cube Scale: " << cube.m_scale << "\n";
-
-        // Print vertices
-        os << "Vertices: ";
-        for (size_t i = 0; i < cube.m_vertices.size(); i += 3) {
-            os << "(" << cube.m_vertices[i].position[0] << ", "
-               << cube.m_vertices[i].position[1] << ", "
-               << cube.m_vertices[i].position[2] << ") ";
-        }
-        os << "\n";
-
-        // Print indices
-        os << "Indices: ";
-        for (size_t i = 0; i < cube.m_indices.size(); ++i) {
-            os << cube.m_indices[i] << " ";
-        }
-        os << "\n";
-
-        return os;
-    }
 protected:
     std::vector<Vertex> computeVertices() override;
     std::vector<unsigned int> computeIndices() override;

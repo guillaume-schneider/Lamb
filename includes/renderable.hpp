@@ -47,10 +47,12 @@ public:
     std::vector<Vertex> getVertices() { return m_vertices; }
     std::vector<unsigned int> getIndices() { return m_indices; }
     void setTexture(const char* path);
-    void setShaderEngine(ShaderEngine &engine) { m_engine = &engine; }
+    void setShaderEngine(ShaderEngine engine) { m_engine = engine; }
+
+    friend std::ostream& operator<<(std::ostream& os, const Renderable& renderable);
 protected:
     GLuint m_VAO, m_VBO, m_EBO;
-    ShaderEngine* m_engine{nullptr};
+    ShaderEngine m_engine;
     std::vector<Vertex> m_vertices;
     std::vector<unsigned int> m_indices;
     std::vector<Texture> m_textures;
