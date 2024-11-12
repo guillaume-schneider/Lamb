@@ -2,6 +2,7 @@
 #include <iostream>
 #include <glad/glad.h>
 #include "stb_image.h"
+#include <texture.hpp>
 
 void Renderable::setup() {
     glGenVertexArrays(1, &m_VAO);
@@ -40,12 +41,27 @@ void Renderable::setup() {
 void Renderable::draw() {
     m_engine.use();
     if (!m_textures.empty()) {
+        unsigned int diffuseNumber = 1, specularNumber = 1;
         for (int i = 0; i < m_textures.size(); i++) {
             glActiveTexture(GL_TEXTURE0 + i);
-            m_engine.setInt("texture" + std::to_string(i), i);
+            std::string number;
+            TextureType type = m_textures[i].type;
+            switch (type) {
+                case TextureType::DIFFUSE:
+                    number = std::to_string(diffuseNumber++);
+                    break;
+                case TextureType::SPECULAR:
+                    number = std::to_string(specularNumber++);
+                    break;
+            };
+
+            std::string typeStr = toString(type);
+            std::string textureUniformName = "material." + typeStr + number;
+            m_engine.setInt(textureUniformName.c_str(), i); // c_str() need to be called directly, otherwise pointer will be lose.
             glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
         }
     }
+    glActiveTexture(GL_TEXTURE0);
 
     glBindVertexArray(m_VAO);
     glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0);
@@ -54,10 +70,11 @@ void Renderable::draw() {
 }
 
 
-void Renderable::setTexture(const char* path) {
+void Renderable::setTexture(const char* path, TextureType type) {
     std::string filename(path);
 
     Texture texture;
+    texture.type = type;
     texture.path = std::string(path);
     glGenTextures(1, &texture.id);
     if (texture.id == 0) {
@@ -68,7 +85,7 @@ void Renderable::setTexture(const char* path) {
     int width, height, nrComponents;
     unsigned char *data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
     if (data) {
-        GLenum format = GL_RGB;  // Default format
+        GLenum format = GL_RGB;
         if (nrComponents == 1)
             format = GL_RED;
         else if (nrComponents == 3)
@@ -80,7 +97,6 @@ void Renderable::setTexture(const char* path) {
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
-        // Set texture wrapping and filtering options
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);

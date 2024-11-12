@@ -5,7 +5,7 @@
 #include <shader.hpp>
 #include <glad/glad.h>
 #include <vector>
-#include <string>
+#include <texture.hpp>
 
 
 #define MAX_BONE_INFLUENCE 4
@@ -28,12 +28,6 @@ struct Vertex {
     float m_Weights[MAX_BONE_INFLUENCE];
 };
 
-struct Texture {
-    GLuint id;
-    std::string type;
-    std::string path;
-};
-
 class Renderable {
 public:
     Renderable() : m_VAO(0), m_VBO(0), m_EBO(0) {}
@@ -46,7 +40,7 @@ public:
     void setup();
     std::vector<Vertex> getVertices() { return m_vertices; }
     std::vector<unsigned int> getIndices() { return m_indices; }
-    void setTexture(const char* path);
+    void setTexture(const char* path, TextureType type);
     void setShaderEngine(ShaderEngine engine) { m_engine = engine; }
 
     friend std::ostream& operator<<(std::ostream& os, const Renderable& renderable);

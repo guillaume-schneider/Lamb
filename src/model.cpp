@@ -7,67 +7,16 @@
 #include "model.hpp"
 #include "shader.hpp"
 #include "stb_image.h"
+#include <texture.hpp>
 
 
 Model::Model(std::string const path) {
     loadModel(path);
 }
 
-void Mesh::setupMesh() {
-    glGenVertexArrays(1, &m_VAO);
-    glGenBuffers(1, &m_VBO);
-    glGenBuffers(1, &m_EBO);
-
-    glBindVertexArray(m_VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-
-    glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(Vertex), m_vertices.data(), GL_STATIC_DRAW);  
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(unsigned int), 
-                 m_indices.data(), GL_STATIC_DRAW);
-
-    // vertex positions
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    // vertex normals
-    glEnableVertexAttribArray(1);	
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
-    // vertex texture coords
-    glEnableVertexAttribArray(2);	
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, textureCoordinates));
-
-    glBindVertexArray(0);
-};
-
-void Mesh::draw(ShaderEngine &shader) 
-{
-    unsigned int diffuseNr = 1;
-    unsigned int specularNr = 1;
-    for(unsigned int i = 0; i < m_textures.size(); i++)
-    {
-        glActiveTexture(GL_TEXTURE0 + i); // activate proper texture unit before binding
-        // retrieve texture number (the N in diffuse_textureN)
-        std::string number;
-        std::string name = m_textures[i].type;
-        if(name == "texture_diffuse")
-            number = std::to_string(diffuseNr++);
-        else if(name == "texture_specular")
-            number = std::to_string(specularNr++);
-
-        shader.setInt(("material." + name + number).c_str(), i);
-        glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
-    }
-    glActiveTexture(GL_TEXTURE0);
-
-    glBindVertexArray(m_VAO);
-    glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0);
-    glBindVertexArray(0);
-};
-
-void Model::draw(ShaderEngine& shader) {
+void Model::draw() {
     for (unsigned int i = 0; i < m_meshes.size(); i++) 
-        m_meshes[i].draw(shader);
+        m_meshes[i].draw();
 };
 
 void Model::loadModel(std::string path) {
@@ -136,10 +85,10 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
     if (mesh->mMaterialIndex >= 0) {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
         std::vector<Texture> diffuseMaps = this->loadMaterialTextures(material,
-            aiTextureType_DIFFUSE, "texture_diffuse");
+            aiTextureType_DIFFUSE, TextureType::DIFFUSE);
         textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
         std::vector<Texture> specularMaps = this->loadMaterialTextures(material, 
-                                        aiTextureType_SPECULAR, "texture_specular");
+                                        aiTextureType_SPECULAR, TextureType::SPECULAR);
         textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
     }
 
@@ -186,13 +135,14 @@ unsigned int textureFromFile(const char *path, const std::string &directory)
     return textureID; 
 };
 
-std::vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type, std::string typeName)
+std::vector<Texture> Model::loadMaterialTextures(aiMaterial *mat,
+    aiTextureType assimpTextureType, TextureType lambTextureType)
 {
     std::vector<Texture> textures;
-    for(unsigned int i = 0; i < mat->GetTextureCount(type); i++)
+    for(unsigned int i = 0; i < mat->GetTextureCount(assimpTextureType); i++)
     {
         aiString str;
-        mat->GetTexture(type, i, &str);
+        mat->GetTexture(assimpTextureType, i, &str);
         bool skip = false;
         for(unsigned int j = 0; j < m_texturesLoaded.size(); j++)
         {
@@ -207,7 +157,7 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType 
         {
             Texture texture;
             texture.id = textureFromFile(str.C_Str(), m_directory);
-            texture.type = typeName;
+            texture.type = lambTextureType;
             texture.path = str.C_Str();
             textures.push_back(texture);
             m_texturesLoaded.push_back(texture); // add to loaded textures

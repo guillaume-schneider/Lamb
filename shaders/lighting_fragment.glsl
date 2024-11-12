@@ -10,11 +10,10 @@ uniform vec3 cameraPosition;
 
 // was object color
 struct Material {
-    vec3 specular;
+    sampler2D texture_diffuse1;
+    sampler2D texture_specular1;
     float shininess;
 }; 
-
-uniform sampler2D texture0;
 
 // was light strengh
 struct Light {
@@ -31,15 +30,15 @@ void main() {
     vec3 norm = normalize(normal);
     vec3 lightDirection = normalize(light.position - fragPosition);
     float diff = max(dot(norm, lightDirection), 0.0);
-    vec3 diffuse = light.diffuse * diff * texture(texture0, TexCoords).rgb;
+    vec3 diffuse = light.diffuse * diff * texture(material.texture_diffuse1, TexCoords).rgb;
 
-    vec3 ambient = light.ambient * texture(texture0, TexCoords).rgb;
+    vec3 ambient = light.ambient * texture(material.texture_diffuse1, TexCoords).rgb;
 
     vec3 cameraDirection = normalize(cameraPosition - fragPosition);
     vec3 reflectDirection = reflect(-lightDirection, norm);
 
     float spec = pow(max(dot(cameraDirection, reflectDirection), 0.0), material.shininess);
-    vec3 specular = light.specular * spec * material.specular;
+    vec3 specular = light.specular * spec * vec3(texture(material.texture_specular1, TexCoords));
 
     vec3 result = (ambient + diffuse + specular);
     FragColor = vec4(result, 1.0);

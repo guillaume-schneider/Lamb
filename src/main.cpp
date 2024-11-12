@@ -27,6 +27,8 @@
 
 #include <input.hpp>
 #include <materials.hpp>
+#include <entity.hpp>
+#include <entity_manager.hpp>
 
 
 constexpr unsigned int WINDOW_WIDTH = 1980;
@@ -157,17 +159,19 @@ int main(int argc, char* argv[]) {
     glEnable(GL_DEPTH_TEST);
 
     Cube cube(1.0f);
-    cube.setTexture("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\res\\box.bmp");
+    // cube.setTexture("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\res\\box.bmp", TextureType::DIFFUSE);
     cube.setShaderEngine(shaderEngineLight);
     Sphere sphere(1.0f);
 
     Cube cubeLighting(1.0f);
     cubeLighting.setShaderEngine(shaderEngineLighting);
-    cubeLighting.setTexture("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\res\\box.bmp");
+    cubeLighting.setTexture("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\res\\box.bmp", TextureType::DIFFUSE);
+    cubeLighting.setTexture("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\res\\box_specular_map.png", TextureType::SPECULAR);
 
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
     Model model("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\res\\teapot.fbx");
+    // model.setShaderEngine(shaderEngineLighting);
 
     Camera camera; 
 
@@ -177,6 +181,8 @@ int main(int argc, char* argv[]) {
     Material goldMaterial = MaterialManager::getInstance()->getMaterial(MaterialType::GOLD);
     Material silverMaterial = MaterialManager::getInstance()->getMaterial(MaterialType::SILVER);
     Material copperMaterial = MaterialManager::getInstance()->getMaterial(MaterialType::COPPER);
+
+    Entity entity = EntityFactory::createEntity();
 
     while (InputSystem::getInstance()->shouldStop()) {
 
@@ -228,15 +234,13 @@ int main(int argc, char* argv[]) {
 
         modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
         shaderEngineLight.setMat4("model", modelMatrix);
-    
+
         cube.draw();
 
         modelMatrix = glm::mat4(1.0f);
 
         shaderEngineLighting.use();
         shaderEngineLighting.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
-
-        shaderEngineLighting.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
         shaderEngineLighting.setFloat("material.shininess", 64.0f);
 
         shaderEngineLighting.setVec3("light.position", lightPosition.x,
@@ -253,7 +257,7 @@ int main(int argc, char* argv[]) {
         shaderEngineLighting.setMat4("projection", projection);
         cubeLighting.draw();
 
-        // model.draw(shaderEngineLighting);
+        // model.draw();
         glBindVertexArray(0);
 
         ImGui::Render();
