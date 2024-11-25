@@ -14,7 +14,7 @@ struct Shader {
 
 class ShaderFactory {
     public:
-        Shader createShader(const std::string& filePath, unsigned int shaderType);
+        static Shader createShader(const std::string& filePath, unsigned int shaderType);
 };
 
 class ShaderEngine {
@@ -45,6 +45,10 @@ class ShaderEngine {
         void setFloat(const std::string& name, float value) {
             glUniform1f(glGetUniformLocation(m_shaderProgramID, name.c_str()),
                 value);
+        }
+
+        int size() {
+            return m_shaders.size();
         }
 };
 

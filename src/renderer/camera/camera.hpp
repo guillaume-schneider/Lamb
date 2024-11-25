@@ -29,6 +29,10 @@ public:
         return m_position;
     }
 
+    glm::vec3 getDirection() const {
+        return m_direction;
+    }
+
 private:
     glm::vec3 m_position;       // Camera position
     glm::vec3 m_direction;      // Camera direction

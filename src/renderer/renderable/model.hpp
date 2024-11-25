@@ -9,30 +9,26 @@
 #include <primitive.hpp>
 #include <renderable.hpp>
 #include <texture.hpp>
+#include <iostream>
 
 
 class Mesh : public Renderable {
 public:
-    Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices,
-        std::vector<Texture> textures) : Renderable() {
-        m_vertices = vertices;
-        m_indices = indices;
-        m_textures = textures;
-
-        setup();
-    };
+    Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices,
+         std::vector<Texture>& textures);
 };
 
 class Model {
 public:
     Model(std::string const path);
+    Model(Primitive& primitive);
     void draw();
-    void setShaderEngine(ShaderEngine engine) {
-        for (auto& mesh : m_meshes)
-            mesh.setShaderEngine(engine);
+    void setShaderEngine(ShaderEngine engine);
+    std::vector<Renderable> getMeshes() {
+        return m_meshes;
     }
 private:
-    std::vector<Mesh> m_meshes;
+    std::vector<Renderable> m_meshes;
     std::string m_directory;
     std::vector<Texture> m_texturesLoaded;
 

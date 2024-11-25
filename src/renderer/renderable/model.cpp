@@ -9,15 +9,33 @@
 #include "stb_image.h"
 #include <texture.hpp>
 
+Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices,
+    std::vector<Texture>& textures) : Renderable() {
+    m_vertices = vertices;
+    m_indices = indices;
+    m_textures = textures;
+
+    setup();
+};
 
 Model::Model(std::string const path) {
     loadModel(path);
 }
 
+Model::Model(Primitive& primitive) {
+    m_meshes.push_back(primitive);
+}
+
 void Model::draw() {
-    for (unsigned int i = 0; i < m_meshes.size(); i++) 
+    for (unsigned int i = 0; i < m_meshes.size(); i++) {
         m_meshes[i].draw();
+    }
 };
+
+void Model::setShaderEngine(ShaderEngine engine) {
+    for (auto& mesh : m_meshes)
+        mesh.setShaderEngine(engine);
+}
 
 void Model::loadModel(std::string path) {
     Assimp::Importer importer;
@@ -27,6 +45,7 @@ void Model::loadModel(std::string path) {
         std::cout << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
         return;
     }
+
     m_directory = path.substr(0, path.find_last_of('/'));
 
     processNode(scene->mRootNode, scene);
@@ -35,7 +54,7 @@ void Model::loadModel(std::string path) {
 void Model::processNode(aiNode* node, const aiScene* scene) {
     for (unsigned int i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        m_meshes.push_back(processMesh(mesh, scene));
+        m_meshes.push_back(std::move(processMesh(mesh, scene)));
     }
 
     for (unsigned int i = 0; i < node->mNumChildren; i++) {
@@ -77,9 +96,9 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
     }
 
     for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
-            aiFace face = mesh->mFaces[i];
-            for (unsigned int j = 0; j < face.mNumIndices; j++)
-                indices.push_back(face.mIndices[j]);
+        aiFace face = mesh->mFaces[i];
+        for (unsigned int j = 0; j < face.mNumIndices; j++)
+            indices.push_back(face.mIndices[j]);
     }
 
     if (mesh->mMaterialIndex >= 0) {

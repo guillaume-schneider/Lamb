@@ -31,11 +31,10 @@ struct Vertex {
 class Renderable {
 public:
     Renderable() : m_VAO(0), m_VBO(0), m_EBO(0) {}
-    virtual ~Renderable() {
-        glDeleteBuffers(1, &m_VBO);
-        glDeleteBuffers(1, &m_EBO);
-        glDeleteVertexArrays(1, &m_VAO);
-    }
+    //TODO: handle object destruction implicitly
+    // The problem with ~Renderable is that return by copy could cause
+    // OpenGL to delete OpenGL context buffers
+    void destroy();
     void draw();
     void setup();
     std::vector<Vertex> getVertices() { return m_vertices; }

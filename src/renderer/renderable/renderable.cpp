@@ -3,6 +3,8 @@
 #include <glad/glad.h>
 #include "stb_image.h"
 #include <texture.hpp>
+#include <shader.hpp>
+
 
 void Renderable::setup() {
     glGenVertexArrays(1, &m_VAO);
@@ -37,9 +39,34 @@ void Renderable::setup() {
     glBindVertexArray(0);
 }
 
+void Renderable::destroy() {
+    if (m_VBO != 0) {
+        glDeleteBuffers(1, &m_VBO);
+        m_VBO = 0;
+    }
+    if (m_EBO != 0) {
+        glDeleteBuffers(1, &m_EBO);
+        m_EBO = 0;
+    }
+    if (m_VAO != 0) {
+        glDeleteVertexArrays(1, &m_VAO);
+        m_VAO = 0;
+    }
+}
+
 
 void Renderable::draw() {
+    if (!glIsVertexArray(m_VAO)) std::cerr << "No VAO bound." << std::endl;
+    if (!glIsBuffer(m_EBO)) std::cerr << "No EBO bound." << std::endl;
+    if (!glIsBuffer(m_VBO)) std::cerr << "No VBO bound." << std::endl;
+
+    if (m_engine.size() <= 0) {
+        // m_engine.addShader(Renderable::basicVertexShader);
+        // m_engine.addShader(Renderable::basicFragmentShader);
+    }
+
     m_engine.use();
+    glBindVertexArray(m_VAO);
     if (!m_textures.empty()) {
         unsigned int diffuseNumber = 1, specularNumber = 1;
         for (int i = 0; i < m_textures.size(); i++) {

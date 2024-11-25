@@ -34,14 +34,31 @@
 constexpr unsigned int WINDOW_WIDTH = 1980;
 constexpr unsigned int WINDOW_HEIGHT = 1080;
 
-
-void APIENTRY openglDebugCallback(GLenum source, GLenum type, GLuint id,
-                                  GLenum severity, GLsizei length,
-                                  const GLchar* message, const void* userParam) {
-    std::cerr << "OpenGL Debug Message: " << message << std::endl;
+void GLAPIENTRY openglDebugCallback(GLenum source,
+                                    GLenum type,
+                                    GLuint id,
+                                    GLenum severity,
+                                    GLsizei length,
+                                    const GLchar* message,
+                                    const void* userParam) {
+    std::cerr << "GL CALLBACK: ";
+    if (type == GL_DEBUG_TYPE_ERROR) {
+        std::cerr << "** GL ERROR ** ";
+    }
+    
+    std::cerr << "type = 0x" << std::hex << type 
+              << ", severity = 0x" << severity 
+              << ", message = " << message << std::endl;
 }
 
 glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+
+glm::vec3 pointLightPositions[] = {
+	glm::vec3( 0.7f,  0.2f,  2.0f),
+	glm::vec3( 2.3f, -3.3f, -4.0f),
+	glm::vec3(-4.0f,  2.0f, -12.0f),
+	glm::vec3( 0.0f,  0.0f, -3.0f)
+};  
 
 int main(int argc, char* argv[]) {
 
@@ -142,17 +159,15 @@ int main(int argc, char* argv[]) {
     ShaderEngine shaderEngineLighting;
     ShaderEngine shaderEngineLight;
 
-    ShaderFactory shaderFactory;
-
-    Shader lightingVertexShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\lighting_vertex.glsl", GL_VERTEX_SHADER);
+    Shader lightingVertexShader = ShaderFactory::createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\lighting_vertex.glsl", GL_VERTEX_SHADER);
     shaderEngineLighting.addShader(lightingVertexShader);
-    Shader lightingFragmentShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\lighting_fragment.glsl", GL_FRAGMENT_SHADER);
+    Shader lightingFragmentShader = ShaderFactory::createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\lighting_fragment.glsl", GL_FRAGMENT_SHADER);
     shaderEngineLighting.addShader(lightingFragmentShader);
     shaderEngineLighting.compile();
 
-    Shader lightVertexShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\light_vertex.glsl", GL_VERTEX_SHADER);
+    Shader lightVertexShader = ShaderFactory::createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\light_vertex.glsl", GL_VERTEX_SHADER);
     shaderEngineLight.addShader(lightVertexShader);
-    Shader lightFragmentShader = shaderFactory.createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\light_fragment.glsl", GL_FRAGMENT_SHADER);
+    Shader lightFragmentShader = ShaderFactory::createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\light_fragment.glsl", GL_FRAGMENT_SHADER);
     shaderEngineLight.addShader(lightFragmentShader);
     shaderEngineLight.compile();
 
@@ -170,10 +185,23 @@ int main(int argc, char* argv[]) {
 
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
-    Model model("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\res\\teapot.fbx");
+    // Model model("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\res\\teapot.fbx");
     // model.setShaderEngine(shaderEngineLighting);
 
     Camera camera; 
+
+    glm::vec3 cubePositions[] = {
+        glm::vec3( 0.0f,  0.0f,  0.0f),
+        glm::vec3( 2.0f,  5.0f, -15.0f),
+        glm::vec3(-1.5f, -2.2f, -2.5f),
+        glm::vec3(-3.8f, -2.0f, -12.3f),
+        glm::vec3( 2.4f, -0.4f, -3.5f),
+        glm::vec3(-1.7f,  3.0f, -7.5f),
+        glm::vec3( 1.3f, -2.0f, -2.5f),
+        glm::vec3( 1.5f,  2.0f, -2.5f),
+        glm::vec3( 1.5f,  0.2f, -1.5f),
+        glm::vec3(-1.3f,  1.0f, -1.5f)
+    };
 
     InputHandler::CursorMovementCallback callback = std::bind(&Camera::computeCursorCameraMovements, &camera, std::placeholders::_1, std::placeholders::_2);
     InputHandlerFactory::createInputHandler(callback);
@@ -215,9 +243,6 @@ int main(int argc, char* argv[]) {
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4 modelMatrix = glm::mat4(1.0f);
-        // modelMatrix = glm::rotate(modelMatrix, (float)SDL_GetTicks()/256, glm::vec3(0.0f, 1.0f, 0.0f));
-        // modelMatrix = glm::rotate(modelMatrix, (float)SDL_GetTicks64()/128 * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
 
         glm::mat4 view(1.0f);
         view = camera.getViewMatrix();
@@ -229,35 +254,65 @@ int main(int argc, char* argv[]) {
         shaderEngineLight.use();
         shaderEngineLight.setMat4("projection", projection);
         shaderEngineLight.setMat4("view", view);
-        modelMatrix = glm::translate(modelMatrix, lightPos);
-        glm::vec3 lightPosition = glm::vec3(modelMatrix[3]);
 
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
-        shaderEngineLight.setMat4("model", modelMatrix);
-
-        cube.draw();
+        glm::mat4 modelMatrix;
+        for (int i = 0; i < 4; i++) {
+            modelMatrix = glm::mat4(1.0f);
+            modelMatrix = glm::translate(modelMatrix, pointLightPositions[i]);
+            modelMatrix = glm::scale(modelMatrix, glm::vec3(0.2f));
+            shaderEngineLight.setMat4("model", modelMatrix);
+            cube.draw();
+        }
 
         modelMatrix = glm::mat4(1.0f);
 
         shaderEngineLighting.use();
-        shaderEngineLighting.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+
+        for (int i = 0; i < 4; i++) {
+            std::string lightPositionID = std::format("pointLights[{}]", i);
+            shaderEngineLighting.setVec3(lightPositionID + ".position", pointLightPositions[i]);
+            shaderEngineLighting.setVec3(lightPositionID + ".ambient", 0.05f, 0.05f, 0.05f); 
+            shaderEngineLighting.setVec3(lightPositionID + ".diffuse", 0.8f, 0.8f, 0.8f);
+            shaderEngineLighting.setVec3(lightPositionID + ".specular", 1.0f, 1.0f, 1.0f);
+
+            shaderEngineLighting.setFloat(lightPositionID + ".constant",  1.0f);
+            shaderEngineLighting.setFloat(lightPositionID + ".linear",    0.09f);
+            shaderEngineLighting.setFloat(lightPositionID + ".quadratic", 0.032f);
+        }
+
+        shaderEngineLighting.setVec3("directionalLight.direction", -0.2f, -1.0f, -0.3f); 
+        shaderEngineLighting.setVec3("directionalLight.ambient", 0.05f, 0.05f, 0.05f); 
+        shaderEngineLighting.setVec3("directionalLight.diffuse", 0.4f, 0.4f, 0.4f);
+        shaderEngineLighting.setVec3("directionalLight.specular", 0.5f, 0.5f, 0.5f);
+
         shaderEngineLighting.setFloat("material.shininess", 64.0f);
 
-        shaderEngineLighting.setVec3("light.position", lightPosition.x,
-            lightPosition.y, lightPosition.z);
-
-        shaderEngineLighting.setVec3("light.ambient", 0.2f, 0.2f, 0.2f); 
-        shaderEngineLighting.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
-        shaderEngineLighting.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+        shaderEngineLighting.setVec3("spotlight.ambient", 0.05f, 0.05f, 0.05f); 
+        shaderEngineLighting.setVec3("spotlight.diffuse", 0.8f, 0.8f, 0.8f);
+        shaderEngineLighting.setVec3("spotlight.specular", 1.0f, 1.0f, 1.0f);
+        shaderEngineLighting.setFloat("spotlight.constant",  1.0f);
+        shaderEngineLighting.setFloat("spotlight.linear",    0.09f);
+        shaderEngineLighting.setFloat("spotlight.quadratic", 0.032f);
+        shaderEngineLighting.setVec3("spotlight.position", camera.getPosition());
+        shaderEngineLighting.setVec3("spotlight.direction", camera.getDirection());
+        shaderEngineLighting.setFloat("spotlight.radius", glm::cos(glm::radians(12.5f)));
+        shaderEngineLighting.setFloat("spotlight.outerRadius", glm::cos(glm::radians(17.5f)));
+        // shaderEngineLighting.setFloat("spotlight.outerCutOff",   glm::cos(glm::radians(17.5f)));
 
         shaderEngineLighting.setVec3("cameraPosition", camera.getPosition());
 
-        shaderEngineLighting.setMat4("model", modelMatrix);
         shaderEngineLighting.setMat4("view", view);
         shaderEngineLighting.setMat4("projection", projection);
-        cubeLighting.draw();
 
-        // model.draw();
+        for (int i = 0; i < 10; i++) {
+            glm::mat4 model(1.0f);
+            model = glm::translate(model, cubePositions[i]);
+            float angle = 20.0f * i;
+            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            shaderEngineLighting.setMat4("model", model);
+            cubeLighting.draw();
+        }
+
         glBindVertexArray(0);
 
         ImGui::Render();

@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.23)
 
 # Add the main project's include directories so the tests can find the headers
 include_directories(${CMAKE_SOURCE_DIR}/includes)
+include_directories(${CMAKE_SOURCE_DIR}/src)
 
 # Add the source files for the tests
 file(GLOB TEST_SOURCES "${CMAKE_SOURCE_DIR}/tests/*.cpp")

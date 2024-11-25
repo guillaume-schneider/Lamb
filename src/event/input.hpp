@@ -1,5 +1,5 @@
-#ifndef ACTION_H_
-#define ACTION_H_
+#ifndef INPUT_HPP_
+#define INPUT_HPP_
 
 #include <SDL2/SDL.h>
 #include <vector>

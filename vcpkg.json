@@ -10,6 +10,7 @@
       "features": ["docking-experimental", "opengl3-binding", "sdl2-binding", "win32-binding"]
     },
     "gtest",
-    "nlohmann-json"
+    "nlohmann-json",
+    "stb"
   ]
 }
