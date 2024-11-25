@@ -2,53 +2,53 @@
 
 ## Description
 
-Un moteur 3D développé en C++ utilisant OpenGL et un ensemble de bibliothèques modernes pour offrir un rendu graphique performant et des fonctionnalités modulaires. Ce projet est conçu pour être une base de travail simple mais puissante pour expérimenter avec les concepts de rendu 3D et les systèmes ECS.
+A 3D engine developed in C++ using OpenGL and a set of modern libraries to provide efficient rendering and modular features. This project is designed as a simple yet powerful foundation for experimenting with 3D rendering concepts and ECS systems.
 
 ---
 
-## Fonctionnalités
+## Features
 
-### 🎨 Rendu graphique
-- **Parseur de fichiers MTL** : Chargement et gestion des matériaux avec prise en charge des propriétés `ambient`, `diffuse`, et `specular`.
-- **Illumination de Phong** : Simulation réaliste des réflexions et éclairages.
-- **Lighting Maps** : Gestion avancée des textures d'éclairage, y compris diffuse et specular maps.
-- **Système de lumières** : Support des lumières directionnelles, ponctuelles, et spotlights avec des bordures douces.
-- **Création de primitive** : Création paramètrique de cube et de sphère.
+### 🎨 Graphics Rendering
+- **MTL File Parser**: Load and manage materials with support for `ambient`, `diffuse`, and `specular` properties.
+- **Phong Illumination**: Realistic simulation of reflections and lighting.
+- **Lighting Maps**: Advanced management of lighting textures, including diffuse and specular maps.
+- **Lighting System**: Supports directional, point, and spotlights with soft edges.
+- **Primitive Creation**: Parametric creation of cubes and spheres.
 
-### 📷 Gestion de la caméra
-- Mouvement fluide avec souris et clavier.
-- Modes caméra FPS et orbitale.
-- Utilisation de la bibliothèque `glm` pour la gestion des transformations 3D.
+### 📷 Camera Management
+- Smooth movement using mouse and keyboard.
+- FPS and orbital camera modes.
+- Powered by the `glm` library for 3D transformations and calculations.
 
-### 🛠️ Système ECS (Entity Component System)
-- Gestion minimale des entités et composants pour une organisation claire des objets de la scène.
-- Extensible pour ajouter de nouvelles fonctionnalités comme des animations ou des comportements personnalisés.
+### 🛠️ ECS (Entity Component System)
+- Minimal entity and component management for clear organization of scene objects.
+- Easily extendable to add new features like animations or custom behaviors.
 
-### 📂 Gestion des fichiers
-- Chargement de modèles via **Assimp** (formats supportés : `.obj`, `.fbx`, etc.).
-- Parsing et gestion des matériaux via les fichiers `.mtl`.
+### 📂 File Handling
+- Load 3D models via **Assimp** (supported formats: `.obj`, `.fbx`, etc.).
+- Parse and manage materials from `.mtl` files.
 
-### 🔍 Tests unitaires
-- Utilisation de **Google Test (gtest)** pour assurer la stabilité et la fiabilité du moteur.
+### 🔍 Unit Testing
+- Built with **Google Test (gtest)** to ensure engine stability and reliability.
 
-### 🖱️ Interface utilisateur
-- Intégration de **Dear ImGui** pour un outil d'inspection et de débogage interactif.
-
----
-
-## Technologies utilisées
-
-- **OpenGL** : API de rendu graphique.
-- **GLM** : Librairie mathématique pour les transformations et calculs 3D.
-- **SDL2** : Gestion de la fenêtre, des entrées et des événements.
-- **Assimp** : Chargement et parsing des fichiers de modèles 3D.
-- **GLAD** : Loader d'extensions OpenGL.
-- **Dear ImGui** : Interface utilisateur graphique.
-- **Google Test** : Tests unitaires pour valider le fonctionnement du moteur.
-- **nlohmann-json** : Parsing et manipulation des fichiers JSON pour les configurations.
+### 🖱️ User Interface
+- Integration of **Dear ImGui** for interactive inspection and debugging tools.
 
 ---
 
-## Dépendances
+## Technologies Used
 
-Le gestionnaire de packages [**vcpkg**](https://github.com/microsoft/vcpkg) est utilisé pour gérer toutes les bibliothèques externes.
+- **OpenGL**: Graphics rendering API.
+- **GLM**: Mathematical library for transformations and 3D calculations.
+- **SDL2**: Window, input, and event management.
+- **Assimp**: 3D model loading and parsing.
+- **GLAD**: OpenGL extension loader.
+- **Dear ImGui**: Graphical user interface.
+- **Google Test**: Unit testing framework.
+- **nlohmann-json**: JSON parsing and manipulation for configurations.
+
+---
+
+## Dependencies
+
+The [**vcpkg**](https://github.com/microsoft/vcpkg) package manager is used to handle all external libraries.
