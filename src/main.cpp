@@ -11,6 +11,7 @@
 #include <imgui_impl_opengl3.h>
 
 #include "shader.hpp"
+#include "shader_engine.hpp"
 #include "camera.hpp"
 #include "time.hpp"
 #include "model.hpp"
@@ -159,17 +160,19 @@ int main(int argc, char* argv[]) {
     ShaderEngine shaderEngineLighting;
     ShaderEngine shaderEngineLight;
 
-    Shader lightingVertexShader = ShaderFactory::createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\lighting_vertex.glsl", GL_VERTEX_SHADER);
+    Shader lightingVertexShader = ShaderFactory::createShader(".\\shaders\\lighting_vertex.glsl", GL_VERTEX_SHADER);
     shaderEngineLighting.addShader(lightingVertexShader);
-    Shader lightingFragmentShader = ShaderFactory::createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\lighting_fragment.glsl", GL_FRAGMENT_SHADER);
+    Shader lightingFragmentShader = ShaderFactory::createShader(".\\shaders\\lighting_fragment.glsl", GL_FRAGMENT_SHADER);
     shaderEngineLighting.addShader(lightingFragmentShader);
     shaderEngineLighting.compile();
 
-    Shader lightVertexShader = ShaderFactory::createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\light_vertex.glsl", GL_VERTEX_SHADER);
+    Shader lightVertexShader = ShaderFactory::createShader(".\\shaders\\light_vertex.glsl", GL_VERTEX_SHADER);
     shaderEngineLight.addShader(lightVertexShader);
-    Shader lightFragmentShader = ShaderFactory::createShader("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\shaders\\light_fragment.glsl", GL_FRAGMENT_SHADER);
+    Shader lightFragmentShader = ShaderFactory::createShader(".\\shaders\\light_fragment.glsl", GL_FRAGMENT_SHADER);
     shaderEngineLight.addShader(lightFragmentShader);
     shaderEngineLight.compile();
+
+    ShaderEngine basicEngine = ShaderEngineFactory::createEngine(".\\shaders\\basic_vertex.glsl", ".\\shaders\\basic_fragment.glsl");
 
     glEnable(GL_DEPTH_TEST);
 
@@ -180,13 +183,13 @@ int main(int argc, char* argv[]) {
 
     Cube cubeLighting(1.0f);
     cubeLighting.setShaderEngine(shaderEngineLighting);
-    cubeLighting.setTexture("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\res\\box.bmp", TextureType::DIFFUSE);
-    cubeLighting.setTexture("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\res\\box_specular_map.png", TextureType::SPECULAR);
+    cubeLighting.setTexture(".\\res\\box.bmp", TextureType::DIFFUSE);
+    cubeLighting.setTexture(".\\res\\box_specular_map.png", TextureType::SPECULAR);
 
     SDL_SetRelativeMouseMode(SDL_TRUE);
 
-    // Model model("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\res\\teapot.fbx");
-    // model.setShaderEngine(shaderEngineLighting);
+    Model teapot(".\\res\\teapot.fbx");
+    teapot.setShaderEngine(basicEngine);
 
     Camera camera; 
 
@@ -243,7 +246,6 @@ int main(int argc, char* argv[]) {
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
         glm::mat4 view(1.0f);
         view = camera.getViewMatrix();
 
@@ -265,53 +267,61 @@ int main(int argc, char* argv[]) {
         }
 
         modelMatrix = glm::mat4(1.0f);
+        shaderEngineLight.setMat4("model", modelMatrix);
 
-        shaderEngineLighting.use();
+        // shaderEngineLighting.use();
 
-        for (int i = 0; i < 4; i++) {
-            std::string lightPositionID = std::format("pointLights[{}]", i);
-            shaderEngineLighting.setVec3(lightPositionID + ".position", pointLightPositions[i]);
-            shaderEngineLighting.setVec3(lightPositionID + ".ambient", 0.05f, 0.05f, 0.05f); 
-            shaderEngineLighting.setVec3(lightPositionID + ".diffuse", 0.8f, 0.8f, 0.8f);
-            shaderEngineLighting.setVec3(lightPositionID + ".specular", 1.0f, 1.0f, 1.0f);
+        // for (int i = 0; i < 4; i++) {
+        //     std::string lightPositionID = std::format("pointLights[{}]", i);
+        //     shaderEngineLighting.setVec3(lightPositionID + ".position", pointLightPositions[i]);
+        //     shaderEngineLighting.setVec3(lightPositionID + ".ambient", 0.05f, 0.05f, 0.05f); 
+        //     shaderEngineLighting.setVec3(lightPositionID + ".diffuse", 0.8f, 0.8f, 0.8f);
+        //     shaderEngineLighting.setVec3(lightPositionID + ".specular", 1.0f, 1.0f, 1.0f);
 
-            shaderEngineLighting.setFloat(lightPositionID + ".constant",  1.0f);
-            shaderEngineLighting.setFloat(lightPositionID + ".linear",    0.09f);
-            shaderEngineLighting.setFloat(lightPositionID + ".quadratic", 0.032f);
-        }
+        //     shaderEngineLighting.setFloat(lightPositionID + ".constant",  1.0f);
+        //     shaderEngineLighting.setFloat(lightPositionID + ".linear",    0.09f);
+        //     shaderEngineLighting.setFloat(lightPositionID + ".quadratic", 0.032f);
+        // }
 
-        shaderEngineLighting.setVec3("directionalLight.direction", -0.2f, -1.0f, -0.3f); 
-        shaderEngineLighting.setVec3("directionalLight.ambient", 0.05f, 0.05f, 0.05f); 
-        shaderEngineLighting.setVec3("directionalLight.diffuse", 0.4f, 0.4f, 0.4f);
-        shaderEngineLighting.setVec3("directionalLight.specular", 0.5f, 0.5f, 0.5f);
+        // shaderEngineLighting.setVec3("directionalLight.direction", -0.2f, -1.0f, -0.3f); 
+        // shaderEngineLighting.setVec3("directionalLight.ambient", 0.05f, 0.05f, 0.05f); 
+        // shaderEngineLighting.setVec3("directionalLight.diffuse", 0.4f, 0.4f, 0.4f);
+        // shaderEngineLighting.setVec3("directionalLight.specular", 0.5f, 0.5f, 0.5f);
 
-        shaderEngineLighting.setFloat("material.shininess", 64.0f);
+        // shaderEngineLighting.setFloat("material.shininess", 64.0f);
 
-        shaderEngineLighting.setVec3("spotlight.ambient", 0.05f, 0.05f, 0.05f); 
-        shaderEngineLighting.setVec3("spotlight.diffuse", 0.8f, 0.8f, 0.8f);
-        shaderEngineLighting.setVec3("spotlight.specular", 1.0f, 1.0f, 1.0f);
-        shaderEngineLighting.setFloat("spotlight.constant",  1.0f);
-        shaderEngineLighting.setFloat("spotlight.linear",    0.09f);
-        shaderEngineLighting.setFloat("spotlight.quadratic", 0.032f);
-        shaderEngineLighting.setVec3("spotlight.position", camera.getPosition());
-        shaderEngineLighting.setVec3("spotlight.direction", camera.getDirection());
-        shaderEngineLighting.setFloat("spotlight.radius", glm::cos(glm::radians(12.5f)));
-        shaderEngineLighting.setFloat("spotlight.outerRadius", glm::cos(glm::radians(17.5f)));
-        // shaderEngineLighting.setFloat("spotlight.outerCutOff",   glm::cos(glm::radians(17.5f)));
+        // shaderEngineLighting.setVec3("spotlight.ambient", 0.05f, 0.05f, 0.05f); 
+        // shaderEngineLighting.setVec3("spotlight.diffuse", 0.8f, 0.8f, 0.8f);
+        // shaderEngineLighting.setVec3("spotlight.specular", 1.0f, 1.0f, 1.0f);
+        // shaderEngineLighting.setFloat("spotlight.constant",  1.0f);
+        // shaderEngineLighting.setFloat("spotlight.linear",    0.09f);
+        // shaderEngineLighting.setFloat("spotlight.quadratic", 0.032f);
+        // shaderEngineLighting.setVec3("spotlight.position", camera.getPosition());
+        // shaderEngineLighting.setVec3("spotlight.direction", camera.getDirection());
+        // shaderEngineLighting.setFloat("spotlight.radius", glm::cos(glm::radians(12.5f)));
+        // shaderEngineLighting.setFloat("spotlight.outerRadius", glm::cos(glm::radians(17.5f)));
 
-        shaderEngineLighting.setVec3("cameraPosition", camera.getPosition());
+        // shaderEngineLighting.setVec3("cameraPosition", camera.getPosition());
 
-        shaderEngineLighting.setMat4("view", view);
-        shaderEngineLighting.setMat4("projection", projection);
+        // shaderEngineLighting.setMat4("view", view);
+        // shaderEngineLighting.setMat4("projection", projection);
 
-        for (int i = 0; i < 10; i++) {
-            glm::mat4 model(1.0f);
-            model = glm::translate(model, cubePositions[i]);
-            float angle = 20.0f * i;
-            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            shaderEngineLighting.setMat4("model", model);
-            cubeLighting.draw();
-        }
+        // for (int i = 0; i < 10; i++) {
+        //     glm::mat4 model(1.0f);
+        //     model = glm::translate(model, cubePositions[i]);
+        //     float angle = 20.0f * i;
+        //     model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+        //     shaderEngineLighting.setMat4("model", model);
+        //     cubeLighting.draw();
+        // }
+        basicEngine.use();
+        glm::mat4 model(1.0f);
+
+        basicEngine.setMat4("model", model);
+        basicEngine.setMat4("view", view);
+        basicEngine.setMat4("projection", projection);
+        // shaderEngineLighting.setMat4("model", model);
+        teapot.draw();
 
         glBindVertexArray(0);
 

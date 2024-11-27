@@ -4,6 +4,7 @@
 #include "stb_image.h"
 #include <texture.hpp>
 #include <shader.hpp>
+#include "shader_engine.hpp"
 
 
 void Renderable::setup() {

@@ -2,10 +2,11 @@
 #define RENDERABLE_H_
 
 
-#include <shader.hpp>
 #include <glad/glad.h>
 #include <vector>
-#include <texture.hpp>
+#include "texture.hpp"
+#include "shader.hpp"
+#include "shader_engine.hpp"
 
 
 #define MAX_BONE_INFLUENCE 4
