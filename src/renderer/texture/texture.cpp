@@ -1,4 +1,6 @@
-#include <texture.hpp>
+#include "texture.hpp"
+#include <unordered_map>
+
 
 std::string toString(TextureType type) {
     switch (type) {

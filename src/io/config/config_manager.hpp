@@ -23,7 +23,7 @@ private:
     static ConfigurationManager* instance;
     json m_config;
     std::string m_materials_path;
-    const char* m_config_path = "C:\\Users\\NULL\\Documents\\Games\\LambEngine\\config\\links.json";
+    const char* m_config_path = ".\\config\\links.json";
 
     ConfigurationManager(const ConfigurationManager&) = delete;
     ConfigurationManager& operator=(const ConfigurationManager) = delete;

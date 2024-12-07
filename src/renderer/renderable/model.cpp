@@ -3,11 +3,12 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <iostream>
+#include <stb_image.h>
 
 #include "model.hpp"
 #include "shader.hpp"
-#include "stb_image.h"
-#include <texture.hpp>
+#include "shader_engine.hpp"
+#include "texture.hpp"
 
 Mesh::Mesh(std::vector<Vertex>& vertices, std::vector<unsigned int>& indices,
     std::vector<Texture>& textures) : Renderable() {

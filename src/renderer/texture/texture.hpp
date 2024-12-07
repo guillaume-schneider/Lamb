@@ -1,9 +1,8 @@
-#ifndef TEXTURE_HPP_H
-#define TEXTURE_HPP_H
+#ifndef TEXTURE_HPP_
+#define TEXTURE_HPP_
 
 #include <glad/glad.h>
 #include <string>
-#include <unordered_map>
 #include <stdexcept>
 
 enum TextureType {

@@ -5,11 +5,14 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-#include "shader.hpp"
-#include <primitive.hpp>
-#include <renderable.hpp>
-#include <texture.hpp>
+#include <vector>
 #include <iostream>
+
+#include "shader.hpp"
+#include "shader_engine.hpp"
+#include "primitive.hpp"
+#include "renderable.hpp"
+#include "texture.hpp"
 
 
 class Mesh : public Renderable {
