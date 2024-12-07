@@ -172,6 +172,7 @@ int main(int argc, char* argv[]) {
     shaderEngineLight.compile();
 
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
 
     Cube cube(1.0f);
     // cube.setTexture("C:\\Users\\NULL\\Documents\\Games\\LambEngine\\res\\box.bmp", TextureType::DIFFUSE);
